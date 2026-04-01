@@ -51,16 +51,15 @@ return {
     reward_function = reward_function,
     frameStepInterval = 15,
     print_RL_step_summary = true,
-    game_state_variables_order = { "p1life", "p1attackmul", "p2life", "p2attackmul" },
-    game_state_getters = {
-        p1life = get_p1_life,
-        p1attackmul = get_p1_attackMul,
-        p2life = get_p2_life, 
-        p2attackmul = get_p2_attackMul,
+    state_variables = {
+        {name = "p1life", getter = get_p1_life},
+        {name = "p1attackmul", getter = get_p1_attackMul},
+        {name = "p2life", getter = get_p2_life}, 
+        {name = "p2attackmul", getter = get_p2_attackMul},
     },
     actions = {
-        apply_attack_mul_p1 = apply_attack_mul_p1,
-        apply_attack_mul_p2 = apply_attack_mul_p2,
+        {name = "apply_attack_mul_p1", apply_func = apply_attack_mul_p1},
+        {name = "apply_attack_mul_p2", apply_func = apply_attack_mul_p2},
     },
     
     hyperparameters = {

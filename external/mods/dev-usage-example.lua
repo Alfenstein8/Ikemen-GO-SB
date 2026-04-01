@@ -2,7 +2,7 @@
 
 -- Function that sets up config and sends it to the server
 local function testConfigPrint()
-  local config_test_response = sblib.init("external/mods/config-example")
+  local config_test_response = SBLIB.setup_config("external/mods/config-example")
   print("Server response: ", config_test_response)
 end
 hook.add("launchFight","test", testConfigPrint);
@@ -15,7 +15,7 @@ local function stepWithGameState()
   frame = frame + 1
   
   -- Run step which mutates the game state with activations from server
-  sblib.step(frame)
+  SBLIB.step(frame)
 
 end
 

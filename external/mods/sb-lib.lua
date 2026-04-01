@@ -1,145 +1,129 @@
-sblib =  {}
-sblib.config = {}
-sblib.reward_function = nil
-sblib.action_names = {}
-sblib.actions = {}
+SBLIB =  {}
+local config = {}
+
 local stepCounter = 0
+function SBLIB.setup_config (config_path)
+    local file = require(config_path)
+    config = file
 
-function sblib.init(config_path)
-    local config = require(config_path)
-    return sblib.setup_config(config)
-end
-
-function sblib.setup_config (config)
-    -- Only relevant client side (Such as during step function)
-    sblib.reward_function = config.reward_function
-    sblib.config.endpoint = config.endpoint
-    sblib.config.frameStepInterval = config.frameStepInterval
-    sblib.config.game_state_variables_order = config.game_state_variables_order
-    sblib.config.game_state_getters = config.game_state_getters
-    sblib.config.print_RL_step_summary = config.print_RL_step_summary
-
-    local game_state_size = 0
-    for _, _ in ipairs(sblib.config.game_state_variables_order) do        
-        game_state_size = game_state_size + 1
+    local state_variables_names = {}
+    local state_size = 0
+    for index, value in ipairs(config.state_variables) do
+        state_variables_names[index] = value.name
+        state_size = state_size + 1
     end
+
+    -- Sets up state_variables to be used in step
+    config.state_variables_names =  state_variables_names
 
     local action_names = {}
     local action_size = 0
-
-    local i = 1
-    for key, _ in pairs(config.actions) do
-        action_names[i] = key
+    for index, value in ipairs(config.actions) do
+        action_names[index] = value.name
         action_size = action_size + 1
-        i = i+1
     end
 
     -- Sets local action names to be used in step
-    sblib.action_names = action_names
-    sblib.actions = config.actions
+    config.action_names = action_names
 
     -- Information that gets sent to the server
     -- Only sends the size of input and actions, since names are only needed client size
+    -- Needs to send state names too, but for now it wont such that there are no errors.
     local server_config = {
         name = config.name,
         description = config.description,
-        game_state_size = game_state_size,
-        actions_size = action_size,
+        state_size = state_size,
+        state_variables_names = config.state_variables_names,
+        action_size = action_size,
         action_names = action_names,
         hyperparameters = config.hyperparameters
     }
 
-    sblib.config = config
-
-    local json_encoded_string = sblib.json.encode(server_config)
+    local json_encoded_string = SBLIB.json.encode(server_config)
     return httppost(config.endpoint .. "/config", "application/json", json_encoded_string) 
 end
 
 
 -- Calculates adjustment action based on game_state ikemon go data sent to server
-function sblib.step (frame)
-    if sblib.config == nil then return end
-    if frame % sblib.config.frameStepInterval ~= 0 then
+function SBLIB.step (frame)
+    -- Checks if config is initialized and gets the game state
+    if not config.frameStepInterval then return end
+    
+    local current_game_state = SBLIB.get_game_state()
+
+    if frame % config.frameStepInterval ~= 0
+    or not current_game_state
+    then
         return
     end
-
-    local current_game_state = sblib.get_game_state()
-
-    if current_game_state == nil then return end
 
     stepCounter = stepCounter + 1
 
     -- Calculates reward from config.
-    local reward = sblib.reward_function(current_game_state)
+    local reward = config.reward_function(current_game_state)
     
     ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
     local payload = {}
 
     -- Server requires an array, so this converts table into array
     local game_state_array = {}
-    for _,v in pairs(current_game_state) do
-        table.insert(game_state_array, v)
+    for i, var in ipairs(config.state_variables) do
+        table.insert(game_state_array, current_game_state[var.name])
     end
-    payload.name = sblib.config.name
+    payload.name = config.name
     payload.game_state = game_state_array
     payload.prev_reward = reward
-    local json_encoded_payload = sblib.json.encode(payload)
-    local json_adjustment_actions = httppost(sblib.config.endpoint .. "/step", "application/json", json_encoded_payload)
-    local adjustment_actions = sblib.json.decode(json_adjustment_actions)
+    local json_encoded_payload = SBLIB.json.encode(payload)
+    local json_adjustment_actions = httppost(config.endpoint .. "/step", "application/json", json_encoded_payload)
+    local adjustment_actions = SBLIB.json.decode(json_adjustment_actions)
+
+    -- Assert if action from server exists.
+    assert(adjustment_actions.action ~= nil, "Missing action from server")
 
     -- This temporarily sets the action, should be changed when server gives correct stuff
     local TEMP_ACTION = {adjustment_actions.action}
 
-    sblib.apply_actions(TEMP_ACTION, current_game_state)
+    SBLIB.apply_actions(TEMP_ACTION, current_game_state)
     
-    if sblib.config.print_RL_step_summary == true then
-        sblib.printRLValues(current_game_state, reward, adjustment_actions, stepCounter) 
+    if config.print_RL_step_summary == true then
+        SBLIB.printRLValues(current_game_state, reward, adjustment_actions, stepCounter) 
     end
 end
 
 
 -- Applies action functions as per config on the game_state.
 -- 1 is increase, -1 is decrease and 0 is nochange
-function sblib.apply_actions(adjustment_actions, current_game_state)
+function SBLIB.apply_actions(adjustment_actions, current_game_state)
     for index, value in ipairs(adjustment_actions) do
-    local action_name = sblib.action_names[index]
-    local action_function = sblib.actions[action_name]
-        if action_function then
-            action_function(current_game_state, value)
-        end
+    local action_function = config.actions[index].apply_func
+    action_function(current_game_state, value)
     end
 end
 
 -- Builds game state based on getters from config
 -- This turns the game state into a vector since it preserves the order through the config
-function sblib.get_game_state()
-    -- for index, value in ipairs(adjustment_actions) do
-    -- local action_name = sblib.action_names[index]
-    -- local action_function = sblib.actions[action_name]
-    --     if action_function then
-    --         action_function(current_game_state, value)
-    --     end
-    -- end
-
+function SBLIB.get_game_state()
     local game_state = {}
-    for index, value in ipairs(sblib.config.game_state_variables_order) do
-        local variable_name = sblib.config.game_state_variables_order[index]
-        local getter = sblib.config.game_state_getters[variable_name]
+
+    -- Indexes over all getters for the game state variables
+    for index, _ in ipairs(config.state_variables) do
+        local variable_name = config.state_variables[index].name
+        local getter = config.state_variables[index].getter
         game_state[variable_name] = getter(variable_name)
     end
     return game_state
 end
 
 
-function sblib.printRLValues(current_game_state, reward, actions, stepFrame)
+function SBLIB.printRLValues(current_game_state, reward, actions, stepFrame)
     print("-------- RL Step Summary --------")
     print("Step: ", stepFrame)
-
     -- Print game state
     print("Game State:")
-    for _, var_name in ipairs(sblib.config.game_state_variables_order) do
-        local value = current_game_state[var_name]
-        print("  " .. var_name .. ": " .. tostring(value))
+    for index, _ in ipairs(config.state_variables) do
+        local variable_name = config.state_variables[index].name
+        local var_val = current_game_state[variable_name]
+        print("  " .. variable_name .. ": " .. var_val)
     end
 
     -- Print reward
@@ -148,13 +132,13 @@ function sblib.printRLValues(current_game_state, reward, actions, stepFrame)
     end
 
     -- Print actions if provided
-    if actions ~= nil then
-        print("Actions:")
-        for index, value in ipairs(actions) do
-            local action_name = sblib.action_names[index] or ("action_" .. index)
-            print("  " .. action_name .. ": " .. tostring(value))
-        end
-    end
+    -- if actions ~= nil then
+    --     print("Actions:")
+    --     for index, value in ipairs(actions) do
+    --         local action_name = SBLIB.action_names[index] or ("action_" .. index)
+    --         print("  " .. action_name .. ": " .. tostring(value))
+    --     end
+    -- end
 
     print("--------------------------------")
 end
@@ -183,7 +167,7 @@ end
 ----------------------
 
 -- Embedded json library for encoding tables to JSON data
-sblib.json = (function()
+SBLIB.json = (function()
     -- json.lua
     --
     -- Copyright (c) 2020 rxi
