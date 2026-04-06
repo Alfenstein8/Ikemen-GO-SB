@@ -23,11 +23,11 @@ print(response)
 function setLevels(p1, p2)
   if player(1) then
     setAILevel(p1)
-    print("Player 1 AI level set to " .. ailevel())
+    --print("Player 1 AI level set to " .. ailevel())
   end
   if player(2) then
     setAILevel(p2)
-    print("Player 2 AI level set to " .. ailevel())
+    -- print("Player 2 AI level set to " .. ailevel())
   end
 end
 
