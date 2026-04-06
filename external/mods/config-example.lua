@@ -7,7 +7,7 @@
       -- Quadratic normalized difference
       local reward = norm * math.abs(norm)
       
-      -- Clamp to [-1, 1]
+      -- Clamp to [-10, 10]
       reward = math.max(-10, math.min(10, reward))
       return reward
   end
