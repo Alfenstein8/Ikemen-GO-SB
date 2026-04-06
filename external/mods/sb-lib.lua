@@ -3,7 +3,7 @@ local config = {}
 local stepCounter = 0
 
 --- Skill Balancer Config Setup Function
---- @param config_path any
+--- @param config_path string
 function SBLIB.setup_config (config_path)
     local file = require(config_path)
     config = file
