@@ -1,69 +1,77 @@
--- Reward encourage equal life. For balanced game
-local function reward_function(current_game_state)
-    local diff = math.abs(current_game_state.p1life - current_game_state.p2life)
-    return ((diff-1000)/10)-50
-end
+  -- Reward encourage equal life. For balanced game
+  local function reward_function()
+      local diff = get_p1_life() - get_p2_life()
+      -- Normalizing health
+      local norm = diff / 1000
+      
+      -- Quadratic normalized difference
+      local reward = norm * math.abs(norm)
+      
+      -- Clamp to [-10, 10]
+      reward = math.max(-10, math.min(10, reward))
+      return reward
+  end
 
-local function apply_attack_mul_p1 (game_state, value) 
-    game_state.p1attackmul = game_state.p1attackmul + (value * 0.01)
+  local function apply_attack_mul_p1 (value) 
     if player(1) then
-      setAttackMul(game_state.p1attackmul)
+      local atkMul = attackmul()
+      local calc = atkMul + (value * 0.001)  
+      -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
+      calc = math.max(0.01, calc)
+      SBLIB.round(calc,3)
+      setAttackMul(calc)
     end
-end
+  end
 
-local function apply_attack_mul_p2 (game_state, value) 
-    game_state.p2attackmul = game_state.p2attackmul + (value * 0.01)
+  local function apply_attack_mul_p2 (value)
     if player(2) then
-      setAttackMul(game_state.p2attackmul)
+      local atkMul = attackmul()
+      local calc = atkMul + (value * 0.001) 
+      -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
+      calc = math.max(0.01, calc)
+      SBLIB.round(calc,3)
+      setAttackMul(calc)
     end
-end
-
-local function get_p1_life () 
-  if player(1) then
-    return life()
   end
-end
-local function get_p2_life () 
-  if player(2) then
-    return life()
-  end
-end
 
-local function get_p1_attackMul()
-  if player(1) then
-    return attackmul()
+  function get_p1_life () 
+    if player(1) then
+      return life()
+    end
   end
-end
 
-local function get_p2_attackMul()
-  if player(2) then
-    return attackmul()
+  function get_p2_life () 
+    if player(2) then
+      return life()
+    end
   end
-end
 
--- Game state variable order is needed since the server must know the variable order
--- The game state variables are used for setters and getters. Sometimes both are needed sometimes not.
--- All getters are needed but setters are only needed for reward function
-return {
-    name = "ikemon-test",
-    endpoint = "http://localhost:3000",
-    description = "Sample RL config",
-    reward_function = reward_function,
-    frameStepInterval = 15,
-    print_RL_step_summary = true,
-    state_variables = {
-        {name = "p1life", getter = get_p1_life},
-        {name = "p1attackmul", getter = get_p1_attackMul},
-        {name = "p2life", getter = get_p2_life}, 
-        {name = "p2attackmul", getter = get_p2_attackMul},
-    },
-    actions = {
-        {name = "apply_attack_mul_p1", apply_func = apply_attack_mul_p1},
-        {name = "apply_attack_mul_p2", apply_func = apply_attack_mul_p2},
-    },
-    
-    hyperparameters = {
-        learning_rate = 0.01,
-        discount_factor = 0.99
-    }
-}
+  function get_p1_attackMul ()
+    if player(1) then
+      return attackmul()
+    end
+  end
+
+  function get_p2_attackMul ()
+    if player(2) then
+      return attackmul()
+    end
+  end
+
+
+  -- Basic setup for RL for ikemon go. All state vars are getters and application functions set game variables
+  return {
+      name = "ikemon-test",
+      endpoint = "http://localhost:3000",
+      description = "Sample RL config",
+      reward_function = reward_function,
+      frame_step_interval = 20,
+      print_RL_step_summary = true,
+      state_variables = {get_p1_life, get_p1_attackMul, get_p2_life, get_p2_attackMul},
+      actions = {
+        apply_attack_mul_p1 = apply_attack_mul_p1,
+        apply_attack_mul_p2 = apply_attack_mul_p2,
+      },
+      
+      hyperparameters = {}
+  }
