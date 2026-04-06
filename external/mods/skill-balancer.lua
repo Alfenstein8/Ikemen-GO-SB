@@ -53,5 +53,5 @@ end
 hook.add("loop#watch","test", testPrint);
 
 
--- setGameSpeed(10000)
+-- setGameSpeed(100)
 print("SB Loaded")

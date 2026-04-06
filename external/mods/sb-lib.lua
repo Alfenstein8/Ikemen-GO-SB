@@ -158,6 +158,11 @@ function print_table(tbl)
 end
 ----------------------
 
+function SBLIB.round(num, decimals)
+  local mult = 10 ^ (decimals or 0)
+  return math.floor(num * mult + 0.5) / mult
+end
+
 -- Embedded json library for encoding tables to JSON data
 SBLIB.json = (function()
     -- json.lua

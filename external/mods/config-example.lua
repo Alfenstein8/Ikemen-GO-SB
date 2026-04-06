@@ -5,15 +5,20 @@
       local norm = diff / 1000
       
       -- Quadratic normalized difference
-      return norm * math.abs(norm)
+      local reward = norm * math.abs(norm)
+      
+      -- Clamp to [-1, 1]
+      reward = math.max(-10, math.min(10, reward))
+      return reward
   end
 
   local function apply_attack_mul_p1 (value) 
     if player(1) then
       local atkMul = attackmul()
       local calc = atkMul + (value * 0.001)  
-      -- Clamps attack at 0.01
+      -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
       calc = math.max(0.01, calc)
+      SBLIB.round(calc,3)
       setAttackMul(calc)
     end
   end
@@ -22,8 +27,9 @@
     if player(2) then
       local atkMul = attackmul()
       local calc = atkMul + (value * 0.001) 
-      -- Clamps attack at 0.01
+      -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
       calc = math.max(0.01, calc)
+      SBLIB.round(calc,3)
       setAttackMul(calc)
     end
   end
@@ -59,7 +65,7 @@
       endpoint = "http://localhost:3000",
       description = "Sample RL config",
       reward_function = reward_function,
-      frame_step_interval = 15,
+      frame_step_interval = 20,
       print_RL_step_summary = true,
       state_variables = {get_p1_life, get_p1_attackMul, get_p2_life, get_p2_attackMul},
       actions = {
