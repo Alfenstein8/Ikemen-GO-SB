@@ -11,22 +11,29 @@ function SBLIB.setup_config (config_path)
     local state_size = #config.state_variables
     local action_size = #config.actions
 
-    -- Setting up sorted action names to later to ensure correct order of actions from server and client
-    local action_names = {}
-    for key, _ in pairs(config.actions) do
-        table.insert(action_names, key)
+    -- Setting up state names to get sent to server
+    local state_variables_names = {}
+    for _, value in ipairs(config.state_variables) do 
+        table.insert(state_variables_names, value[1])
     end
-    table.sort(action_names)
-    config.action_names = action_names
+
+    -- Setting up action names to get sent to server
+    local action_names = {}
+    for _, value in ipairs(config.actions) do 
+        table.insert(action_names, value[1])
+    end
 
     -- Prepare the config with the variables the server needs
     local server_config = {
         name = config.name,
         description = config.description,
         state_size = state_size,
-        state_variables_names = config.state_variables_names,
+        state_variables_names = state_variables_names,
         action_size = action_size,
         action_names = action_names,
+        allow_overwrite = config.allow_overwrite,
+        allow_rename = config.allow_rename,
+        train_every = config.train_every,
         hyperparameters = config.hyperparameters
     }
 
@@ -90,12 +97,8 @@ end
 --- 1 is increase, -1 is decrease and 0 is nochange
 ---@param adjustment_actions table
 function SBLIB.apply_actions(adjustment_actions)
-    local action_names = config.action_names
-    -- This loop uses action names from config since they are sorted correctly to avoid pairs issue
-    for i, _ in ipairs(adjustment_actions) do
-        local ordered_name = action_names[i]
-        local action = config.actions[ordered_name]
-        action(adjustment_actions[i])
+    for index, value in ipairs(adjustment_actions) do
+        config.actions[index][2](value)
     end
 end
 
@@ -107,7 +110,7 @@ function SBLIB.get_game_state()
     local game_state = {}
     -- Indexes over all getters for the game state variables
     for _, value in ipairs(config.state_variables) do
-        table.insert(game_state, value())
+        table.insert(game_state, value[2]())
     end
     return game_state
 end
@@ -125,10 +128,9 @@ function SBLIB.print_rl_values(game_state, reward, actions, stepFrame)
     -- Print game state
     print("Game State:")
     -- Hardcoding the indexes since we no longer can infer the names, perhaps a better way to print idk?
-    print("p1 life: ", game_state[1])
-    print("p1 attackMul: ", game_state[2])
-    print("p2 life: ", game_state[3])
-    print("p2 attackMul: ", game_state[4])
+    for index, value in ipairs(config.state_variables) do
+        print(value[1] .. ": " .. game_state[index])
+    end
 
     -- Print reward
     if reward ~= nil then

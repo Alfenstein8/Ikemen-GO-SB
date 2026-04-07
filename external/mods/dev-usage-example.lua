@@ -12,9 +12,10 @@ hook.add("launchFight","test", setupConfig);
 local frame = 0
 local function stepWithGameState()
   frame = frame + 1
-  setLevels(3,5)
+  setLevels(1,8)
   -- Run step which mutates the game state with activations from server
   SBLIB.step(frame)
 end
-
 hook.add("loop#watch","state", stepWithGameState);
+
+-- setGameSpeed(10000)

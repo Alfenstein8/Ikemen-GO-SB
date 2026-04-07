@@ -1,15 +1,10 @@
   -- Reward encourage equal life. For balanced game
   local function reward_function()
-      local diff = get_p1_life() - get_p2_life()
-      -- Normalizing health
-      local norm = diff / 1000
-      
-      -- Quadratic normalized difference
-      local reward = norm * math.abs(norm)
-      
-      -- Clamp to [-10, 10]
-      reward = math.max(-10, math.min(10, reward))
-      return reward
+      local max = math.max(get_p1_life(), get_p2_life())
+      local min = math.min(get_p1_life(), get_p2_life())
+      local diff = max-min
+      local reward = 1000 - diff
+      return (reward - 500)
   end
 
   local function apply_attack_mul_p1 (value) 
@@ -67,11 +62,21 @@
       reward_function = reward_function,
       frame_step_interval = 20,
       print_RL_step_summary = true,
-      state_variables = {get_p1_life, get_p1_attackMul, get_p2_life, get_p2_attackMul},
-      actions = {
-        apply_attack_mul_p1 = apply_attack_mul_p1,
-        apply_attack_mul_p2 = apply_attack_mul_p2,
-      },
+      allow_overwrite = false,
+      allow_rename = false,
+
+      post_request_function = httppost,
       
+      train_every = 512,
+      state_variables = {
+        {"p1_life", get_p1_life},
+        {"p1_attackMul", get_p1_attackMul},
+        {"p2_life", get_p2_life},
+        {"p2_attackMul", get_p2_attackMul},
+      },
+      actions = {
+        {"apply_attack_mul_p1", apply_attack_mul_p1},
+        {"apply_attack_mul_p2", apply_attack_mul_p2},
+      },
       hyperparameters = {}
   }

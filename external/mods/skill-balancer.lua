@@ -51,7 +51,4 @@ local function testPrint()
   -- print("frame: ".. frames)
 end
 hook.add("loop#watch","test", testPrint);
-
-
--- setGameSpeed(100)
 print("SB Loaded")
