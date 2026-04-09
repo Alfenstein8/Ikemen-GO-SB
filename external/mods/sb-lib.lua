@@ -37,10 +37,8 @@ function SBLIB.setup_config (config_path)
         hyperparameters = config.hyperparameters,
         learning_rate = config.learning_rate
     }
-    print("test for table print")
-    print_table(server_config)
     local json_encoded_string = SBLIB.json.encode(server_config)
-    return httppost(config.endpoint .. "/config", "application/json", json_encoded_string) 
+    httppost(config.endpoint .. "/config", "application/json", json_encoded_string) 
 end
 
 

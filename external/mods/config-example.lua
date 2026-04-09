@@ -77,5 +77,5 @@
         {"apply_attack_mul_p2", apply_attack_mul_p2},
       },
       hyperparameters = {},
-      learning_rate = 0.1
+      learning_rate = 0.01
   }
