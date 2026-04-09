@@ -64,11 +64,9 @@
       print_RL_step_summary = true,
       allow_overwrite = false,
       allow_rename = false,
-
-      post_request_function = httppost,
-      
+      -- post_request_function = httppost, TODO IF SQUISH IS BAD
       train_every = 512,
-      state_variables = {
+      state = {
         {"p1_life", get_p1_life},
         {"p1_attackMul", get_p1_attackMul},
         {"p2_life", get_p2_life},

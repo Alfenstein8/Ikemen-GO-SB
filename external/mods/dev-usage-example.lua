@@ -15,7 +15,24 @@ local function stepWithGameState()
   setLevels(1,8)
   -- Run step which mutates the game state with activations from server
   SBLIB.step(frame)
+
+ -- If the match is over. Reload the game. Infinite matches for training! 
+  if matchover() then
+    matchReload()
+  end
+
 end
 hook.add("loop#watch","state", stepWithGameState);
 
--- setGameSpeed(10000)
+setGameSpeed(100)
+
+-- If you wanna run stuff from menu use this!
+-- local function menuPrint()
+--   print("Working menu init print")
+-- end
+-- hook.add("main.menu.loop", "myTestHook", menuPrint)
+
+-- Relevant and interesting hooks that could be used
+-- matchReload() refreshes match 
+-- roundStart() idk?
+
