@@ -34,7 +34,8 @@ function SBLIB.setup_config (config_path)
         allow_overwrite = config.allow_overwrite,
         allow_rename = config.allow_rename,
         train_every = config.train_every,
-        hyperparameters = config.hyperparameters
+        hyperparameters = config.hyperparameters,
+        learning_rate = config.learning_rate
     }
 
     local json_encoded_string = SBLIB.json.encode(server_config)

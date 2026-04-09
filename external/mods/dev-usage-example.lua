@@ -24,15 +24,6 @@ local function stepWithGameState()
 end
 hook.add("loop#watch","state", stepWithGameState);
 
-setGameSpeed(100)
+setGameSpeed(10000)
 
--- If you wanna run stuff from menu use this!
--- local function menuPrint()
---   print("Working menu init print")
--- end
--- hook.add("main.menu.loop", "myTestHook", menuPrint)
-
--- Relevant and interesting hooks that could be used
--- matchReload() refreshes match 
--- roundStart() idk?
 
