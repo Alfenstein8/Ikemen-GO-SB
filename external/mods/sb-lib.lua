@@ -28,16 +28,17 @@ function SBLIB.setup_config (config_path)
         name = config.name,
         description = config.description,
         state_size = state_size,
-        state_names = state_names,
+        state = state_names,
         action_size = action_size,
-        action_names = action_names,
+        actions = action_names,
         allow_overwrite = config.allow_overwrite,
         allow_rename = config.allow_rename,
         train_every = config.train_every,
         hyperparameters = config.hyperparameters,
         learning_rate = config.learning_rate
     }
-
+    print("test for table print")
+    print_table(server_config)
     local json_encoded_string = SBLIB.json.encode(server_config)
     return httppost(config.endpoint .. "/config", "application/json", json_encoded_string) 
 end
