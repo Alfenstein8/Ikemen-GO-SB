@@ -10,7 +10,7 @@
   local function apply_attack_mul_p1 (value) 
     if player(1) then
       local atkMul = attackmul()
-      local calc = atkMul + (value * 0.001)  
+      local calc = atkMul + (value * 0.1)  
       -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
       calc = math.max(0.01, calc)
       SBLIB.round(calc,3)
@@ -21,7 +21,7 @@
   local function apply_attack_mul_p2 (value)
     if player(2) then
       local atkMul = attackmul()
-      local calc = atkMul + (value * 0.001) 
+      local calc = atkMul + (value * 0.1) 
       -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
       calc = math.max(0.01, calc)
       SBLIB.round(calc,3)
@@ -62,13 +62,11 @@
       reward_function = reward_function,
       frame_step_interval = 20,
       print_RL_step_summary = true,
-      allow_overwrite = false,
+      allow_overwrite = true,
       allow_rename = false,
-
-      post_request_function = httppost,
-      
+      -- post_request_function = httppost, TODO IF SQUISH IS BAD
       train_every = 512,
-      state_variables = {
+      state = {
         {"p1_life", get_p1_life},
         {"p1_attackMul", get_p1_attackMul},
         {"p2_life", get_p2_life},
@@ -78,5 +76,6 @@
         {"apply_attack_mul_p1", apply_attack_mul_p1},
         {"apply_attack_mul_p2", apply_attack_mul_p2},
       },
-      hyperparameters = {}
+      hyperparameters = {},
+      learning_rate = 0.01
   }

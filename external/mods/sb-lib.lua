@@ -8,13 +8,13 @@ function SBLIB.setup_config (config_path)
     local file = require(config_path)
     config = file
 
-    local state_size = #config.state_variables
+    local state_size = #config.state
     local action_size = #config.actions
 
     -- Setting up state names to get sent to server
-    local state_variables_names = {}
-    for _, value in ipairs(config.state_variables) do 
-        table.insert(state_variables_names, value[1])
+    local state_names = {}
+    for _, value in ipairs(config.state) do 
+        table.insert(state_names, value[1])
     end
 
     -- Setting up action names to get sent to server
@@ -28,17 +28,17 @@ function SBLIB.setup_config (config_path)
         name = config.name,
         description = config.description,
         state_size = state_size,
-        state_variables_names = state_variables_names,
+        state = state_names,
         action_size = action_size,
-        action_names = action_names,
+        actions = action_names,
         allow_overwrite = config.allow_overwrite,
         allow_rename = config.allow_rename,
         train_every = config.train_every,
-        hyperparameters = config.hyperparameters
+        hyperparameters = config.hyperparameters,
+        learning_rate = config.learning_rate
     }
-
     local json_encoded_string = SBLIB.json.encode(server_config)
-    return httppost(config.endpoint .. "/config", "application/json", json_encoded_string) 
+    httppost(config.endpoint .. "/config", "application/json", json_encoded_string) 
 end
 
 
@@ -109,7 +109,7 @@ end
 function SBLIB.get_game_state()
     local game_state = {}
     -- Indexes over all getters for the game state variables
-    for _, value in ipairs(config.state_variables) do
+    for _, value in ipairs(config.state) do
         table.insert(game_state, value[2]())
     end
     return game_state
@@ -128,7 +128,7 @@ function SBLIB.print_rl_values(game_state, reward, actions, stepFrame)
     -- Print game state
     print("Game State:")
     -- Hardcoding the indexes since we no longer can infer the names, perhaps a better way to print idk?
-    for index, value in ipairs(config.state_variables) do
+    for index, value in ipairs(config.state) do
         print(value[1] .. ": " .. game_state[index])
     end
 
