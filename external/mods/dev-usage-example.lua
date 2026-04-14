@@ -13,7 +13,7 @@ local function stepWithGameState()
   frame = frame + 1
   -- Run step which mutates the game state with activations from server
   SBLIB.step(frame)
-
+  setLevels(1,8)
  -- If the match is over. Reload the game. Infinite matches for training! 
   if matchover() then
     matchReload()
