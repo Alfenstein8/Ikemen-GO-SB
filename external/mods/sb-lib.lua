@@ -38,7 +38,7 @@ function SBLIB.setup_config (config_path)
         learning_rate = config.learning_rate
     }
     local json_encoded_string = SBLIB.json.encode(server_config)
-    httppost(config.endpoint .. "/config", "application/json", json_encoded_string) 
+    config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string) 
 end
 
 
@@ -63,7 +63,7 @@ function SBLIB.step (frame)
     payload.game_state = game_state
     payload.prev_reward = reward
     local json_encoded_payload = SBLIB.json.encode(payload)
-    local json_adjustment_actions = httppost(config.endpoint .. "/step", "application/json", json_encoded_payload)
+    local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
     local adjustment_actions = SBLIB.json.decode(json_adjustment_actions)
     local action_enum_val = adjustment_actions.action
     ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
