@@ -16,7 +16,7 @@ local function stepWithGameState()
     SBLIB.step(frame)
     setLevels(1,8)
   end
-  -- If the match is over. Reload the game. Infinite matches for training! 
+  -- If the match is over. Reload the game. Infinite matches for training!
   if matchover() then
   matchReload()
   end
@@ -25,6 +25,8 @@ hook.add("loop#watch","state", stepWithGameState);
 
 setGameSpeed(10000)
 
+addHotkey('o', true, false, false, true, false, 'setGameSpeed(100000)')
+addHotkey('p', true, false, false, true, false, 'setGameSpeed(1)')
 -- Relevant values for when animation run in game (Round state like at the start)
 -- roundstate() values:
 -- 0 = pre-intro

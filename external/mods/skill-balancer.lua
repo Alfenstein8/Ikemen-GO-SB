@@ -40,8 +40,6 @@ function printLife()
   end
 end
 
-addHotkey('p', true, false, false, true, false, 'setCom(1,0)')
-addHotkey('o', true, false, false, true, false, 'setCom(2,0)')
 addHotkey('u', true, false, false, true, false, 'setLevels(1,6)')
 addHotkey('l', true, false, false, true, false, 'printLife(1,6)')
 
