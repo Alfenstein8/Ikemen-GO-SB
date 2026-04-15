@@ -13,13 +13,13 @@ function SBLIB.setup_config (config_path)
 
     -- Setting up state names to get sent to server
     local state_names = {}
-    for _, value in ipairs(config.state) do 
+    for _, value in ipairs(config.state) do
         table.insert(state_names, value[1])
     end
 
     -- Setting up action names to get sent to server
     local action_names = {}
-    for _, value in ipairs(config.actions) do 
+    for _, value in ipairs(config.actions) do
         table.insert(action_names, value[1])
     end
 
@@ -38,7 +38,7 @@ function SBLIB.setup_config (config_path)
         learning_rate = config.learning_rate
     }
     local json_encoded_string = SBLIB.json.encode(server_config)
-    config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string) 
+    config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string)
 end
 
 
@@ -56,7 +56,7 @@ function SBLIB.step (frame)
 
     -- Calculates reward from config.
     local reward = config.reward_function()
-    
+
     ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
     local payload = {}
     payload.name = config.name
@@ -64,10 +64,11 @@ function SBLIB.step (frame)
     payload.prev_reward = reward
     local json_encoded_payload = SBLIB.json.encode(payload)
     local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
-    local adjustment_actions = SBLIB.json.decode(json_adjustment_actions)
-    SBLIB.apply_actions(adjustment_actions.action)
+    local reponse = SBLIB.json.decode(json_adjustment_actions)
+    local actions = reponse.action
+    SBLIB.apply_actions(actions)
     if config.print_RL_step_summary == true then
-        SBLIB.print_rl_values(game_state, reward, action_enum_val, stepCounter) 
+        SBLIB.print_rl_values(game_state, reward, actions, stepCounter)
     end
 end
 
@@ -91,7 +92,11 @@ function SBLIB.get_game_state()
     local game_state = {}
     -- Indexes over all getters for the game state variables
     for _, value in ipairs(config.state) do
-        table.insert(game_state, value[2]())
+        local v = value[2]()
+        if value[3] ~= nil then
+            v = map_range(v, value[3][1], value[3][2], -1, 1)
+        end
+        table.insert(game_state, v)
     end
     return game_state
 end
@@ -120,8 +125,8 @@ function SBLIB.print_rl_values(game_state, reward, actions, stepFrame)
 
     -- Print actions if provided
     if actions ~= nil then
-        print("Action:")
-        print(actions)
+        local arr = string_from_array(actions)
+        print("Action: " .. arr)
     end
 
     print("--------------------------------")
@@ -130,6 +135,11 @@ end
 
 
 ------------ HELPER FUNCTIONS ------------------------
+
+function map_range(value, in_min, in_max, out_min, out_max)
+    return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+end
+
 function print_table(tbl)
     if type(tbl) ~= "table" then
         error("print_table expected table, got " .. type(tbl))
@@ -139,6 +149,20 @@ function print_table(tbl)
         print(tostring(k) .. " = " .. tostring(v) .. " (" .. type(v) .. ")")
     end
 end
+
+function string_from_array(arr)
+    if type(arr) ~= "table" then
+        error("print_array expected table, got " .. type(arr))
+    end
+    local str = "("
+    for _, v in ipairs(arr) do
+        str = str .. tostring(v) .. ", "
+    end
+    str = str:sub(1, -3) -- Remove the last comma and space
+    str = str .. ")"
+    return str
+end
+
 ----------------------
 
 function SBLIB.round(num, decimals)

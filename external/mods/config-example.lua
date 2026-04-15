@@ -7,10 +7,10 @@
       return (reward - 500)
   end
 
-  local function apply_attack_mul_p1 (value) 
+  local function apply_attack_mul_p1 (value)
     if player(1) then
       local atkMul = attackmul()
-      local calc = atkMul + (value * 0.1)  
+      local calc = atkMul + (value * 0.1)
       -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
       calc = math.max(0.01, calc)
       SBLIB.round(calc,3)
@@ -21,7 +21,7 @@
   local function apply_attack_mul_p2 (value)
     if player(2) then
       local atkMul = attackmul()
-      local calc = atkMul + (value * 0.1) 
+      local calc = atkMul + (value * 0.1)
       -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
       calc = math.max(0.01, calc)
       SBLIB.round(calc,3)
@@ -29,13 +29,13 @@
     end
   end
 
-  function get_p1_life () 
+  function get_p1_life ()
     if player(1) then
       return life()
     end
   end
 
-  function get_p2_life () 
+  function get_p2_life ()
     if player(2) then
       return life()
     end
@@ -71,10 +71,10 @@
       post_request_function = post_request_function,
       train_every = 512,
       state = {
-        {"p1_life", get_p1_life},
-        {"p1_attackMul", get_p1_attackMul},
-        {"p2_life", get_p2_life},
-        {"p2_attackMul", get_p2_attackMul},
+        {"p1_life", get_p1_life, {0,1000}},
+        {"p1_attackMul", get_p1_attackMul, {0,5}},
+        {"p2_life", get_p2_life, {0,1000}},
+        {"p2_attackMul", get_p2_attackMul, {0,5}},
       },
       actions = {
         {"apply_attack_mul_p1", apply_attack_mul_p1},
