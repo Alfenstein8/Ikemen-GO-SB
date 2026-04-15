@@ -12,12 +12,21 @@ local frame = 0
 local function stepWithGameState()
   frame = frame + 1
   -- Run step which mutates the game state with activations from server
-  SBLIB.step(frame)
-  setLevels(1,8)
- -- If the match is over. Reload the game. Infinite matches for training! 
+  if roundstate() == 2 then
+    SBLIB.step(frame)
+    setLevels(1,8)
+  end
+  -- If the match is over. Reload the game. Infinite matches for training! 
   if matchover() then
-    matchReload()
+  matchReload()
   end
 end
 hook.add("loop#watch","state", stepWithGameState);
-setGameSpeed(1000)
+
+setGameSpeed(10000)
+
+-- Relevant values for when animation run in game (Round state like at the start)
+-- roundstate() values:
+-- 0 = pre-intro
+-- 1 = intro playing
+-- 2 = fight active (this is where the fight begins after animations)

@@ -53,6 +53,10 @@
     end
   end
 
+  function post_request_function (endpoint_string, content_type_string, payload)
+    -- Custom go post function. 
+    return httppost(endpoint_string, content_type_string, payload) 
+  end
 
   -- Basic setup for RL for ikemon go. All state vars are getters and application functions set game variables
   return {
@@ -64,7 +68,7 @@
       print_RL_step_summary = true,
       allow_overwrite = true,
       allow_rename = false,
-      -- post_request_function = httppost, TODO IF SQUISH IS BAD
+      post_request_function = post_request_function,
       train_every = 512,
       state = {
         {"p1_life", get_p1_life},
