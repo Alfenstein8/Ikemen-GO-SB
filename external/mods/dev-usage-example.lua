@@ -15,10 +15,10 @@ local function stepWithGameState()
   if roundstate() == 2 then
     SBLIB.step(frame)
     setLevels(1,8)
-    -- If the match is over. Reload the game. Infinite matches for training! 
-    if matchover() then
-    matchReload()
-    end
+  end
+  -- If the match is over. Reload the game. Infinite matches for training! 
+  if matchover() then
+  matchReload()
   end
 end
 hook.add("loop#watch","state", stepWithGameState);
