@@ -23,6 +23,7 @@ local function stepWithGameState()
 end
 hook.add("loop#watch","state", stepWithGameState);
 
+-- setGameSpeed(1)
 
 -- Relevant values for when animation run in game (Round state like at the start)
 -- roundstate() values:
