@@ -1,6 +1,8 @@
 SBLIB =  {}
 local config = {}
 local stepCounter = 0
+local last = {}
+local accumulatedReward = 0
 
 --- Skill Balancer Config Setup Function
 --- @param config_path string
@@ -37,6 +39,7 @@ function SBLIB.setup_config (config_path)
         hyperparameters = config.hyperparameters,
         learning_rate = config.learning_rate
     }
+    last = config.last()
     local json_encoded_string = SBLIB.json.encode(server_config)
     config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string)
 end
@@ -56,20 +59,25 @@ function SBLIB.step (frame)
     stepCounter = stepCounter + 1
 
     -- Calculates reward from config.
-    local reward = config.reward_function()
+    accumulatedReward = accumulatedReward + config.reward_function(last)
+    last = config.last()
 
-    ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
-    local payload = {}
-    payload.name = config.name
-    payload.game_state = normalized_game_state
-    payload.prev_reward = reward
-    local json_encoded_payload = SBLIB.json.encode(payload)
-    local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
-    local reponse = SBLIB.json.decode(json_adjustment_actions)
-    local actions = reponse.action
-    SBLIB.apply_actions(actions)
-    if config.print_step_summary == true then
-        SBLIB.print_step_summary(game_state, normalized_game_state, reward, actions, stepCounter)
+    if stepCounter % config.step_every == 0 then
+        local reward = accumulatedReward
+        ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
+        local payload = {}
+        payload.name = config.name
+        payload.game_state = normalized_game_state
+        payload.prev_reward = reward
+        local json_encoded_payload = SBLIB.json.encode(payload)
+        local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
+        local reponse = SBLIB.json.decode(json_adjustment_actions)
+        local actions = reponse.action
+        SBLIB.apply_actions(actions)
+        if config.print_step_summary == true then
+            SBLIB.print_step_summary(game_state, normalized_game_state, reward, actions, stepCounter)
+        end
+        accumulatedReward = 0
     end
 end
 
