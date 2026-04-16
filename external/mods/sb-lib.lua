@@ -51,6 +51,7 @@ function SBLIB.step (frame)
     if frame % config.frame_step_interval ~= 0 then return end
     local game_state = SBLIB.get_game_state()
     if not game_state then return end
+    local normalized_game_state = SBLIB.normalize_game_state(game_state)
 
     stepCounter = stepCounter + 1
 
@@ -60,15 +61,15 @@ function SBLIB.step (frame)
     ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
     local payload = {}
     payload.name = config.name
-    payload.game_state = game_state
+    payload.game_state = normalized_game_state
     payload.prev_reward = reward
     local json_encoded_payload = SBLIB.json.encode(payload)
     local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
     local reponse = SBLIB.json.decode(json_adjustment_actions)
     local actions = reponse.action
     SBLIB.apply_actions(actions)
-    if config.print_RL_step_summary == true then
-        SBLIB.print_rl_values(game_state, reward, actions, stepCounter)
+    if config.print_step_summary == true then
+        SBLIB.print_step_summary(game_state, normalized_game_state, reward, actions, stepCounter)
     end
 end
 
@@ -92,44 +93,47 @@ function SBLIB.get_game_state()
     local game_state = {}
     -- Indexes over all getters for the game state variables
     for _, value in ipairs(config.state) do
-        local v = value[2]()
-        if value[3] ~= nil then
-            v = map_range(v, value[3][1], value[3][2], -1, 1)
-        end
-        table.insert(game_state, v)
+        table.insert(game_state, value[2]())
     end
     return game_state
 end
 
+function SBLIB.normalize_game_state(game_state)
+    local normalized_state = {}
+    for index, _ in ipairs(config.state) do
+        local v = game_state[index]
+        if config.state[index][3] ~= nil then
+            v = map_range(v, config.state[index][3][1], config.state[index][3][2], -1, 1)
+        end
+        table.insert(normalized_state, v)
+    end
+    return normalized_state
+end
 
----Print RL Values
----Simple function for printing relevant RL variables in terminal
+---Simple function for printing relevant variables in terminal
 ---@param game_state table
 ---@param reward float
 ---@param actions table
 ---@param stepFrame integer
-function SBLIB.print_rl_values(game_state, reward, actions, stepFrame)
-    print("-------- RL Step Summary --------")
+function SBLIB.print_step_summary(game_state, normalized_game_state, reward, actions, stepFrame)
+    print()
+    print("-------- Step Summary --------")
     print("Step: ", stepFrame)
-    -- Print game state
-    print("Game State:")
-    -- Hardcoding the indexes since we no longer can infer the names, perhaps a better way to print idk?
-    for index, value in ipairs(config.state) do
-        print(value[1] .. ": " .. game_state[index])
-    end
-
     -- Print reward
     if reward ~= nil then
-        print("Reward: " .. tostring(reward))
+      print("Reward: " .. tostring(reward))
     end
 
     -- Print actions if provided
     if actions ~= nil then
-        local arr = string_from_array(actions)
-        print("Action: " .. arr)
+      local arr = string_from_array(actions)
+      print("Action: " .. arr)
     end
-
-    print("--------------------------------")
+    -- Print game state
+    print("Game State:")
+    for index, value in ipairs(config.state) do
+      print(string.format("%15s: %-15f mapped: %9f", value[1], game_state[index], normalized_game_state[index]))
+    end
 end
 
 
@@ -154,12 +158,12 @@ function string_from_array(arr)
     if type(arr) ~= "table" then
         error("print_array expected table, got " .. type(arr))
     end
-    local str = "("
+    local str = "["
     for _, v in ipairs(arr) do
         str = str .. tostring(v) .. ", "
     end
     str = str:sub(1, -3) -- Remove the last comma and space
-    str = str .. ")"
+    str = str .. "]"
     return str
 end
 

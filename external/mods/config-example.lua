@@ -43,7 +43,7 @@ return {
   description = "Sample RL config",
   reward_function = reward_function,
   frame_step_interval = 20,
-  print_RL_step_summary = true,
+  print_step_summary = true,
   allow_overwrite = true,
   allow_rename = false,
   post_request_function = post_request_function,
