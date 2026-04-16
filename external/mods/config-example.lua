@@ -13,8 +13,10 @@ local function reward_function()
   local diff = max - min
   local reward = 1000 - diff
   local timePunishment = (getRoundTime() - timeremaining()) / 10
+  local highAtkReward = (get_player(1).attackmul + get_player(2).attackmul) * 100
 
-  return (reward - 500) - timePunishment -- Punish for time to encourage faster matches
+  return get_player(1).attackmul * 10 -- Punish for time to encourage faster matches
+  -- return reward - timePunishment + highAtkReward -- Punish for time to encourage faster matches
 end
 
 local function apply_attack_mul(n, value)
@@ -57,5 +59,9 @@ return {
     { "apply_attack_mul_p2", function(v) apply_attack_mul(2, v) end },
   },
   hyperparameters = {},
-  learning_rate = 0.01
+  learning_rate = 0.001,
+  gamma = 1,
+  batch_size = 256,
+  grad_clip = 10.0,
+
 }
