@@ -13,7 +13,7 @@ local function reward_function(last)
   local diff = max - min
   local reward = 1000 - diff
   -- local timePunishment = (getRoundTime() - timeremaining()) / 10
-  local highAtkReward = (last.p1+last.p2) - (get_player(1).attackmul + get_player(2).attackmul)
+  local highAtkReward = (get_player(1).attackmul + get_player(2).attackmul) - (last.p1+last.p2)
 
   -- return get_player(1).attackmul * 10 -- Punish for time to encourage faster matches
   return highAtkReward -- Punish for time to encourage faster matches
