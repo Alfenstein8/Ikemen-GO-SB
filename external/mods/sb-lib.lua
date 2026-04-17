@@ -1,6 +1,7 @@
 SBLIB =  {}
 local config = {}
 local stepCounter = 0
+local done
 
 --- Skill Balancer Config Setup Function
 --- @param config_path string
@@ -45,7 +46,7 @@ end
 ---SBLIB Step Function (Runs every frame_step_interval)
 --- Is responsible for stepping and preparing values for the server to use during RL
 ---@param frame integer
-function SBLIB.step (frame, step)
+function SBLIB.step (frame)
     -- Checks if config is initialized and gets the game state
     if not config.frame_step_interval then return end
     if frame % config.frame_step_interval ~= 0 then return end
@@ -63,7 +64,7 @@ function SBLIB.step (frame, step)
     payload.name = config.name
     payload.game_state = normalized_game_state
     payload.prev_reward = reward
-    payload.step = step
+    payload.done = done
     local json_encoded_payload = SBLIB.json.encode(payload)
     local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
     local reponse = SBLIB.json.decode(json_adjustment_actions)
@@ -72,6 +73,11 @@ function SBLIB.step (frame, step)
     if config.print_step_summary == true then
         SBLIB.print_step_summary(game_state, normalized_game_state, reward, actions, stepCounter)
     end
+    done = false
+end
+
+function SBLIB.done()
+    done = true
 end
 
 
