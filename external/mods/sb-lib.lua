@@ -45,7 +45,7 @@ end
 ---SBLIB Step Function (Runs every frame_step_interval)
 --- Is responsible for stepping and preparing values for the server to use during RL
 ---@param frame integer
-function SBLIB.step (frame)
+function SBLIB.step (frame, step)
     -- Checks if config is initialized and gets the game state
     if not config.frame_step_interval then return end
     if frame % config.frame_step_interval ~= 0 then return end
@@ -63,6 +63,7 @@ function SBLIB.step (frame)
     payload.name = config.name
     payload.game_state = normalized_game_state
     payload.prev_reward = reward
+    payload.step = step
     local json_encoded_payload = SBLIB.json.encode(payload)
     local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
     local reponse = SBLIB.json.decode(json_adjustment_actions)
