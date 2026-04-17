@@ -6,17 +6,24 @@ local function get_player(n)
   }
 end
 -- Reward encourage equal life. For balanced game
-local function reward_function()
+local function reward_function(last)
   local p1_life, p2_life = get_player(1).life, get_player(2).life
   local max = math.max(p1_life, p2_life)
   local min = math.min(p1_life, p2_life)
   local diff = max - min
+  
   local reward = 1000 - diff
   local timePunishment = (getRoundTime() - timeremaining()) / 10
   local highAtkReward = (get_player(1).attackmul + get_player(2).attackmul) * 100
 
-  return get_player(1).attackmul * 10 -- Punish for time to encourage faster matches
+  return get_player(1).attackmul - last.p1AttackMul -- Punish for time to encourage faster matches
   -- return reward - timePunishment + highAtkReward -- Punish for time to encourage faster matches
+end
+
+function last()
+  return {
+    p1AttackMul = get_player(1).attackmul
+  }
 end
 
 local function apply_attack_mul(n, value)
@@ -48,6 +55,7 @@ return {
   allow_rename = false,
   post_request_function = post_request_function,
   train_every = 512,
+  last = last,
   state = {
     { "p1_life",      function() return get_player(1).life end,      { 0, 1000 } },
     { "p1_attackMul", function() return get_player(1).attackmul end, { 0, 5 } },
@@ -60,7 +68,7 @@ return {
   },
   hyperparameters = {},
   learning_rate = 0.001,
-  gamma = 1,
+  gamma = 0.99,
   batch_size = 256,
   grad_clip = 10.0,
 

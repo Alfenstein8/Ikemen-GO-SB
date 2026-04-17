@@ -1,13 +1,16 @@
 SBLIB =  {}
 local config = {}
+local last = {}
 local stepCounter = 0
-local done
+local done = false
 
 --- Skill Balancer Config Setup Function
 --- @param config_path string
 function SBLIB.setup_config (config_path)
     local file = require(config_path)
     config = file
+
+    last = config.last()
 
     local state_size = #config.state
     local action_size = #config.actions
@@ -57,7 +60,9 @@ function SBLIB.step (frame)
     stepCounter = stepCounter + 1
 
     -- Calculates reward from config.
-    local reward = config.reward_function()
+    local reward = config.reward_function(last)
+
+    last = config.last()
 
     ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
     local payload = {}
