@@ -5,26 +5,57 @@ function get_player(n)
     attackmul = attackmul()
   }
 end
--- Reward encourage equal life. For balanced game
+
+local function reward_function_simple(last)
+  return (get_player(1).attackmul - last.p1AtkMul) * 10
+end
+
 local function reward_function(last)
-  local p1_life, p2_life = get_player(1).life, get_player(2).life
-  local max = math.max(p1_life, p2_life)
-  local min = math.min(p1_life, p2_life)
-  local diff = max - min
+  local p1 = get_player(1)
+  local p2 = get_player(2)
 
-  -- local reward = 1000 - diff
-  -- local timePunishment = (getRoundTime() - timeremaining()) / 10
-  -- local highAtkReward = (get_player(1).attackmul + get_player(2).attackmul) * 100
+  local d1 = last.p1Life - p1.life
+  local d2 = last.p2Life - p2.life
 
-  local reward = get_player(1).attackmul - last.p1AttackMul
+  -- If no damage happened , return 0 (Neutral)
+  if d1 <= 0 and d2 <= 0 then
+    return 0
+  end
 
-  return reward
-  -- return reward - timePunishment + highAtkReward -- Punish for time to encourage faster matches
+  -- The player with more health should deal less damage
+  local reward = 0
+
+  -- If P1 deals damage to P2
+  if d2 > 0 then
+    if p1.life > p2.life then
+      reward = reward + 0.1
+    else
+      reward = reward + 0.5
+    end
+  end
+
+  -- If P2 deals damage to P1
+  if d1 > 0 then
+    if p2.life > p1.life then
+      reward = reward + 0.1
+    else
+      reward = reward + 0.5
+    end
+  end
+
+  if p1.attackmul > 3.0 or p2.attackmul > 3.0 then
+    reward = reward - 0.2
+  end
+
+  return math.max(-1, math.min(1, reward))
 end
 
 function last()
   return {
-    p1AttackMul = get_player(1).attackmul
+    p1Life = get_player(1).life,
+    p2Life = get_player(2).life,
+    p1AtkMul = get_player(1).attackmul,
+    p2AtkMul = get_player(2).attackmul
   }
 end
 
@@ -68,10 +99,10 @@ return {
     { "apply_attack_mul_p1", function(v) apply_attack_mul(1, v) end },
     { "apply_attack_mul_p2", function(v) apply_attack_mul(2, v) end },
   },
-  hyperparameters = {},
-  learning_rate = 0.001,
-  gamma = 0.99,
-  batch_size = 256,
-  grad_clip = 10.0,
-
+  hyperparameters = {
+    gamma = 0.95,
+    learning_rate = 0.000005,
+    epochs = 5,
+    entropy_weight = 0.05
+  },
 }
