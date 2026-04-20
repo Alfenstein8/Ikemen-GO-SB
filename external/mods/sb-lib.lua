@@ -1,12 +1,16 @@
 SBLIB =  {}
 local config = {}
+local last = {}
 local stepCounter = 0
+local done = false
 
 --- Skill Balancer Config Setup Function
 --- @param config_path string
 function SBLIB.setup_config (config_path)
     local file = require(config_path)
     config = file
+
+    last = config.last()
 
     local state_size = #config.state
     local action_size = #config.actions
@@ -56,13 +60,16 @@ function SBLIB.step (frame)
     stepCounter = stepCounter + 1
 
     -- Calculates reward from config.
-    local reward = config.reward_function()
+    local reward = config.reward_function(last)
+
+    last = config.last()
 
     ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
     local payload = {}
     payload.name = config.name
     payload.game_state = normalized_game_state
     payload.prev_reward = reward
+    payload.done = done
     local json_encoded_payload = SBLIB.json.encode(payload)
     local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
     local reponse = SBLIB.json.decode(json_adjustment_actions)
@@ -71,6 +78,16 @@ function SBLIB.step (frame)
     if config.print_step_summary == true then
         SBLIB.print_step_summary(game_state, normalized_game_state, reward, actions, stepCounter)
     end
+    done = false
+end
+
+function SBLIB.done()
+    done = true
+end
+
+
+function SBLIB.start()
+    last = config.last()
 end
 
 

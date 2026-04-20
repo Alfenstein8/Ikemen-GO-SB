@@ -40,9 +40,6 @@ function printLife()
   end
 end
 
-addHotkey('u', true, false, false, true, false, 'setLevels(1,6)')
-addHotkey('l', true, false, false, true, false, 'printLife(1,6)')
-
 local frames = 0
 local function testPrint()
   frames = frames + 1
