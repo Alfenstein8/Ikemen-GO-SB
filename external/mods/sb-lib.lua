@@ -42,7 +42,15 @@ function SBLIB.setup_config (config_path)
         learning_rate = config.learning_rate
     }
     local json_encoded_string = SBLIB.json.encode(server_config)
-    config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string)
+    res = config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string)
+
+    -- Used for returning server messages to the client
+    local ok, decoded_res = pcall(SBLIB.json.decode, res)
+    if ok and decoded_res["message"] ~= nil then
+        print("Server Response: ", decoded_res["message"])
+    else
+        print("Server Error: ", res)
+    end
 end
 
 
