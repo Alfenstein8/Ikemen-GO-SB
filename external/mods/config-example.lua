@@ -1,4 +1,4 @@
-local function get_player(n)
+function get_player(n)
   player(n)
   return {
     life = life(),
@@ -11,12 +11,14 @@ local function reward_function(last)
   local max = math.max(p1_life, p2_life)
   local min = math.min(p1_life, p2_life)
   local diff = max - min
-  
-  local reward = 1000 - diff
-  local timePunishment = (getRoundTime() - timeremaining()) / 10
-  local highAtkReward = (get_player(1).attackmul + get_player(2).attackmul) * 100
 
-  return get_player(1).attackmul - last.p1AttackMul -- Punish for time to encourage faster matches
+  -- local reward = 1000 - diff
+  -- local timePunishment = (getRoundTime() - timeremaining()) / 10
+  -- local highAtkReward = (get_player(1).attackmul + get_player(2).attackmul) * 100
+
+  local reward = get_player(1).attackmul - last.p1AttackMul
+
+  return reward
   -- return reward - timePunishment + highAtkReward -- Punish for time to encourage faster matches
 end
 

@@ -86,6 +86,11 @@ function SBLIB.done()
 end
 
 
+function SBLIB.start()
+    last = config.last()
+end
+
+
 --- SBLIB Apply Action function
 --- Applies all action functions from the config in order of the action names calculating during config setup
 --- Uses adjustment actions which is a vector of activations for certain actions.
