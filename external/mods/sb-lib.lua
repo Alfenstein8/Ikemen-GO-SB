@@ -42,7 +42,16 @@ function SBLIB.setup_config (config_path)
         learning_rate = config.learning_rate
     }
     local json_encoded_string = SBLIB.json.encode(server_config)
-    config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string)
+    local res = config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string)
+    
+    -- Returns server responses and hyper param error if present
+    local decoded_res = SBLIB.json.decode(res)
+    if decoded_res["message"] then
+        print("Server response: ", decoded_res["message"])
+    else if decoded_res["HPError"] then
+        print("Hyper parameter error: ", decoded_res["HPError"])
+    end
+    end  
 end
 
 
