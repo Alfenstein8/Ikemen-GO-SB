@@ -46,8 +46,8 @@ function SBLIB.setup_config (config_path)
 
     -- Used for returning server messages to the client
     local ok, decoded_res = pcall(SBLIB.json.decode, res)
-    if ok and decoded_res["message"] ~= nil then
-        print("Server Response: ", decoded_res["message"])
+    if ok and decoded_res.message ~= nil then
+        print("Server Response: ", decoded_res.message)
     else
         print("Server Error: ", res)
     end
