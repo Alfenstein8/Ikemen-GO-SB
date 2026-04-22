@@ -14,6 +14,11 @@ local function stepWithGameState()
   frame = frame + 1
 
 
+  -- If match is started during first round. Then set random cpu lvl
+  if roundno() == 1 and roundstart() then
+    set_random_cpu_levels()
+  end
+
   -- If the match is over. Reload the game. Infinite matches for training!
   if matchover() and running then
     matchReload()
@@ -37,10 +42,16 @@ local function stepWithGameState()
   -- Run step which mutates the game state with activations from server
   if roundstate() == 2 then
     SBLIB.step(frame)
-    setLevels(1,8)
   end
 end
 hook.add("loop#watch","state", stepWithGameState);
+
+function set_random_cpu_levels()
+  -- generates random number between 1 and 8
+  local rand1 = math.random(1,8)
+  local rand2 = math.random(1,8)
+  setLevels(rand1, rand2)
+end
 
 setGameSpeed(10000)
 
