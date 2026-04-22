@@ -49,7 +49,8 @@ function SBLIB.setup_config (config_path)
     if decoded_res["message"] then
         print("Server response: ", decoded_res["message"])
     else if decoded_res["HPError"] then
-        print("Hyper parameter error: ", decoded_res["HPError"])
+        print("Hyper parameter error:")
+        print(decoded_res["HPError"])
     end
     end  
 end
