@@ -2,6 +2,9 @@ name: Build Ikemen GO SB Binaries
 
 on:
   workflow_dispatch:
+  push:
+    branches:   
+     Testing
 
 jobs:
   build-windows:
