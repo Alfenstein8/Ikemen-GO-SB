@@ -1,0 +1,120 @@
+name: Build Ikemen GO SB Binaries
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            git
+            make
+            diffutils
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-go
+            mingw-w64-x86_64-toolchain
+            mingw-w64-x86_64-nasm
+            mingw-w64-x86_64-yasm
+            mingw-w64-x86_64-tools-git
+            mingw-w64-x86_64-libxmp
+            mingw-w64-x86_64-SDL2
+
+      - name: Build Windows binary
+        shell: msys2 {0}
+        run: |
+          ./build/build.sh Win64
+          test -f Ikemen_GO.exe
+
+      - name: Upload Windows executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ikemen_GO_Windows
+          path: Ikemen_GO.exe
+
+  build-linux:
+    name: Linux x64
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            golang-go git pkg-config make nasm yasm build-essential \
+            libxmp-dev libsdl2-dev
+
+      - name: Build Linux binary
+        run: |
+          chmod +x ./build/build.sh
+          ./build/build.sh Linux
+          test -f Ikemen_GO_Linux
+
+      - name: Upload Linux executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ikemen_GO_Linux
+          path: Ikemen_GO_Linux
+
+  build-macos-intel:
+    name: macOS Intel
+    runs-on: macos-13
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install macOS dependencies
+        run: |
+          brew update
+          brew install git go pkg-config nasm libxmp sdl2 molten-vk
+
+      - name: Build macOS Intel binary
+        run: |
+          chmod +x ./build/build.sh
+          ./build/build.sh MacOS
+          test -f bin/Ikemen_GO_MacOS
+
+      - name: Upload macOS Intel executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ikemen_GO_MacOS
+          path: bin/Ikemen_GO_MacOS
+
+  build-macos-arm:
+    name: macOS Apple Silicon
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install macOS dependencies
+        run: |
+          brew update
+          brew install git go pkg-config nasm libxmp sdl2 molten-vk
+
+      - name: Build macOS ARM binary
+        run: |
+          chmod +x ./build/build.sh
+          ./build/build.sh MacOSARM
+          test -f bin/Ikemen_GO_MacOSARM
+
+      - name: Upload macOS ARM executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ikemen_GO_MacOSARM
+          path: bin/Ikemen_GO_MacOSARM
