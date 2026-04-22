@@ -14,59 +14,44 @@ local function reward_function(last)
   local p1 = get_player(1)
   local p2 = get_player(2)
 
-  local d1 = last.p1Life - p1.life
-  local d2 = last.p2Life - p2.life
+  local maxLife = 1000.0
+  local life_diff = (p1.life - p2.life) / maxLife
 
-  -- If no damage happened , return 0 (Neutral)
-  if d1 <= 0 and d2 <= 0 then
-    return 0
+  local mul_diff = (p1.attackmul - p2.attackmul) / 4.0
+
+  local alignment = -(life_diff * mul_diff)
+
+  local function mul_penalty(mul)
+    if mul < 0.3 then return -0.5 * (0.3 - mul) / 0.3 end
+    if mul > 3.5 then return -0.3 * (mul - 3.5) / 1.5 end
+    return 0.0
   end
 
-  -- The player with more health should deal less damage
-  local reward = 0
+  local reward = alignment * 0.8
+      + mul_penalty(p1.attackmul)
+      + mul_penalty(p2.attackmul)
 
-  -- If P1 deals damage to P2
-  if d2 > 0 then
-    if p1.life > p2.life then
-      reward = reward + 0.1
-    else
-      reward = reward + 0.5
-    end
-  end
-
-  -- If P2 deals damage to P1
-  if d1 > 0 then
-    if p2.life > p1.life then
-      reward = reward + 0.1
-    else
-      reward = reward + 0.5
-    end
-  end
-
-  if p1.attackmul > 3.0 or p2.attackmul > 3.0 then
-    reward = reward - 0.2
-  end
-
-  return math.max(-1, math.min(1, reward))
+  return math.max(-1.0, math.min(1.0, reward))
 end
 
 function last()
   return {
     p1Life = get_player(1).life,
     p2Life = get_player(2).life,
-    p1AtkMul = get_player(1).attackmul,
-    p2AtkMul = get_player(2).attackmul
+    p1AttackMul = get_player(1).attackmul,
+    p2AttackMul = get_player(2).attackmul
   }
 end
 
 local function apply_attack_mul(n, value)
   if player(n) then
     local atkMul = attackmul()
-    local calc = atkMul + (value * 0.1)
-    -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
-    calc = math.max(0.01, calc)
+    local requested = atkMul + (value * 0.1)
+    local calc = math.max(0.01, requested)
+    local was_noop = (calc == atkMul)
     SBLIB.round(calc, 3)
     setAttackMul(calc)
+    return was_noop
   end
 end
 
@@ -100,9 +85,14 @@ return {
     { "apply_attack_mul_p2", function(v) apply_attack_mul(2, v) end },
   },
   hyperparameters = {
-    gamma = 0.95,
-    learning_rate = 0.000005,
-    epochs = 5,
-    entropy_weight = 0.05
-  },
+    gamma = 0.99,
+    learning_rate = 0.0003,
+    epochs = 3,
+    entropy_weight = 0.01,
+    lambda = 0.95,
+    epsilon_clip = 0.2,
+    clip_grad = 0.5,
+    batch_size = 64,
+    critic_weight = 0.999
+  }
 }
