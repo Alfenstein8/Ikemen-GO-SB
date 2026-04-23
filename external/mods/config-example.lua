@@ -65,7 +65,7 @@ local function apply_attack_mul(n, value)
     local calc = atkMul + (value * 0.1)
     -- Clamps attack at 0.01 and rounding to avoid infinitely long decimals
     calc = math.max(0.01, calc)
-    SBLIB.round(calc, 3)
+    Utils.round(calc, 3)
     setAttackMul(calc)
   end
 end

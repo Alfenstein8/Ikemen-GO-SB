@@ -1,15 +1,24 @@
--- The point of this file is to show how a GAME DEVELOPER WOULD USE IT
--- Function that sets up config and sends it to the server
- local function setupConfig()
-    if SBLIB then SBLIB.setup_config_from_path("external/mods/config-example") end
- end
- hook.add("main.menu.loop", "setupConfigOnce", setupConfig)
 
-
--- Function that runs every frame and serves sb-lib with game_state variables this runs every frame Interval
--- See config for frame interval
+hook.add("main.menu.loop", "setupConfigOnce", function() Start() end)
 local frame = 0
 local running = false
+
+local function setLevels(p1, p2)
+  if player(1) then
+    setAILevel(p1)
+  end
+  if player(2) then
+    setAILevel(p2)
+  end
+end
+
+local function set_random_cpu_levels()
+  -- generates random number between 1 and 8
+  local rand1 = math.random(1, 8)
+  local rand2 = math.random(1, 8)
+  setLevels(rand1, rand2)
+end
+
 local function stepWithGameState()
   frame = frame + 1
 
@@ -28,32 +37,23 @@ local function stepWithGameState()
   -- Round over
   if (roundover() or matchover()) and running then
     print("Round over!")
-    SBLIB.done()
+    RoundOver()
     running = false
   end
 
   -- Match started
   if roundstart() then
     print("Round started!")
-    SBLIB.start()
+    RoundStarted()
     running = true
   end
 
   -- Run step which mutates the game state with activations from server
   if roundstate() == 2 then
-    SBLIB.step(frame)
+    Update(frame)
   end
 end
-hook.add("loop#watch","state", stepWithGameState);
-
-function set_random_cpu_levels()
-  -- generates random number between 1 and 8
-  local rand1 = math.random(1,8)
-  local rand2 = math.random(1,8)
-  setLevels(rand1, rand2)
-end
-
-setGameSpeed(10000)
+hook.add("loop#watch", "state", stepWithGameState);
 
 addHotkey('o', true, false, false, true, false, 'setGameSpeed(100000)')
 addHotkey('p', true, false, false, true, false, 'setGameSpeed(1)')
@@ -63,3 +63,10 @@ addHotkey('l', true, false, false, true, false, 'setGameSpeed(10)')
 -- 0 = pre-intro
 -- 1 = intro playing
 -- 2 = fight active (this is where the fight begins after animations)
+
+---- Utils ----
+Utils = {}
+function Utils.round(num, decimals)
+  local mult = 10 ^ (decimals or 0)
+  return math.floor(num * mult + 0.5) / mult
+end
