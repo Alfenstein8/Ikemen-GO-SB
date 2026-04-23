@@ -69,6 +69,7 @@ function Utils.round(num, decimals)
   local mult = 10 ^ (decimals or 0)
   return math.floor(num * mult + 0.5) / mult
 end
+
 function Utils.PrintAllGetters()
   for n = 1, 2 do
     local p = Player(n)
