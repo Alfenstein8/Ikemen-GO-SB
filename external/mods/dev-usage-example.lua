@@ -1,7 +1,7 @@
 -- The point of this file is to show how a GAME DEVELOPER WOULD USE IT
 -- Function that sets up config and sends it to the server
  local function setupConfig()
-    if SBLIB then SBLIB.setup_config("external/mods/config-example") end
+    if SBLIB then SBLIB.setup_config_from_path("external/mods/config-example") end
  end
  hook.add("main.menu.loop", "setupConfigOnce", setupConfig)
 
