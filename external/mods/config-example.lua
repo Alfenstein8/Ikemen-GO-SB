@@ -1,4 +1,4 @@
-function get_player(n)
+local function get_player(n)
   player(n)
   return {
     life = life(),
@@ -50,7 +50,7 @@ local function reward_function(last)
   return math.max(-1, math.min(1, reward))
 end
 
-function last()
+local function last()
   return {
     p1Life = get_player(1).life,
     p2Life = get_player(2).life,
@@ -71,7 +71,7 @@ local function apply_attack_mul(n, value)
 end
 
 
-function post_request_function(endpoint_string, content_type_string, payload)
+local function post_request_function(endpoint_string, content_type_string, payload)
   -- Custom go post function.
   return httppost(endpoint_string, content_type_string, payload)
 end
