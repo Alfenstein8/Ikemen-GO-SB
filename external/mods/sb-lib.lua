@@ -5,11 +5,15 @@ local stepCounter = 0
 local done = false
 local color = { _NAME = "color" }
 
+-- Setup the config from a path
+function SBLIB.setup_config_from_path(config_path)
+    SBLIB.setup_config(require(config_path))
+end
+
 --- Skill Balancer Config Setup Function
---- @param config_path string
-function SBLIB.setup_config (config_path)
-    local file = require(config_path)
-    config = file
+--- @param config_object table
+function SBLIB.setup_config (config_object)
+    config = config_object
 
     last = config.last()
 
