@@ -1,5 +1,5 @@
 
--- Runs once when the games is launched
+-- Runs once when the game is launched
 function Start()
 
 end
