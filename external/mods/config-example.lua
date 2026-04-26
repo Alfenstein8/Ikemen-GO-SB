@@ -1,21 +1,16 @@
-local function get_player(n)
-  player(n)
-  return {
-    life = life(),
-    attackmul = attackmul()
-  }
-end
-
 local function reward_function_simple(last)
-  return (get_player(1).attackmul - last.p1AtkMul) * 10
+  return (Player(1).get.attackmul() - last.p1AtkMul) * 10
 end
 
 local function reward_function(last)
-  local p1 = get_player(1)
-  local p2 = get_player(2)
+  local p1Life = Player(1).get.life()
+  local p2Life = Player(2).get.life()
 
-  local d1 = last.p1Life - p1.life
-  local d2 = last.p2Life - p2.life
+  local p1AtkMul = Player(1).get.life()
+  local p2AtkMul = Player(2).get.life()
+
+  local d1 = last.p1Life - p1Life
+  local d2 = last.p2Life - p2Life
 
   -- If no damage happened , return 0 (Neutral)
   if d1 <= 0 and d2 <= 0 then
@@ -27,7 +22,7 @@ local function reward_function(last)
 
   -- If P1 deals damage to P2
   if d2 > 0 then
-    if p1.life > p2.life then
+    if p1Life > p2Life then
       reward = reward + 0.1
     else
       reward = reward + 0.5
@@ -36,14 +31,14 @@ local function reward_function(last)
 
   -- If P2 deals damage to P1
   if d1 > 0 then
-    if p2.life > p1.life then
+    if p2Life > p1Life then
       reward = reward + 0.1
     else
       reward = reward + 0.5
     end
   end
 
-  if p1.attackmul > 3.0 or p2.attackmul > 3.0 then
+  if p1AtkMul > 3.0 or p2AtkMul > 3.0 then
     reward = reward - 0.2
   end
 
@@ -52,10 +47,10 @@ end
 
 local function last()
   return {
-    p1Life = get_player(1).life,
-    p2Life = get_player(2).life,
-    p1AtkMul = get_player(1).attackmul,
-    p2AtkMul = get_player(2).attackmul
+    p1Life = Player(1).get.life(),
+    p2Life = Player(2).get.life(),
+    p1AtkMul = Player(1).get.attackmul(),
+    p2AtkMul = Player(2).get.attackmul()
   }
 end
 
@@ -90,10 +85,10 @@ return {
   train_every = 512,
   last = last,
   state = {
-    { "p1_life",      function() return get_player(1).life end,      { 0, 1000 } },
-    { "p1_attackMul", function() return get_player(1).attackmul end, { 0, 5 } },
-    { "p2_life",      function() return get_player(2).life end,      { 0, 1000 } },
-    { "p2_attackMul", function() return get_player(2).attackmul end, { 0, 5 } },
+    { "p1_life",      function() return Player(1).get.life() end,      { 0, 1000 } },
+    { "p1_attackMul", function() return Player(1).get.attackmul() end, { 0, 5 } },
+    { "p2_life",      function() return Player(2).get.life() end,      { 0, 1000 } },
+    { "p2_attackMul", function() return Player(2).get.attackmul() end, { 0, 5 } },
   },
   actions = {
     { "apply_attack_mul_p1", function(v) apply_attack_mul(1, v) end },

@@ -1,4 +1,3 @@
-
 hook.add("main.menu.loop", "setupConfigOnce", function() Start() end)
 local frame = 0
 local running = false
@@ -69,4 +68,19 @@ Utils = {}
 function Utils.round(num, decimals)
   local mult = 10 ^ (decimals or 0)
   return math.floor(num * mult + 0.5) / mult
+end
+
+function Player(n)
+  player(n)
+  local p = {}
+  local get = {
+    life = life,
+    attackmul = attackmul
+  }
+
+  local set = {}
+
+  p.get = get
+  p.set = set
+  return p
 end
