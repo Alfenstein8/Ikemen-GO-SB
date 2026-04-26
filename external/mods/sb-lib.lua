@@ -15,7 +15,9 @@ end
 function SBLIB.setup_config (config_object)
     config = config_object
 
-    last = config.last()
+    if config.last then
+        last = config.last()
+    end
 
     local state_size = #config.state
     local action_size = #config.actions
@@ -48,7 +50,7 @@ function SBLIB.setup_config (config_object)
     }
     local json_encoded_string = SBLIB.json.encode(server_config)
     local res = config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string)
-    
+
     -- Returns server responses and hyper param error if present
     local decoded_res = SBLIB.json.decode(res)
     if decoded_res["message"] then
@@ -58,7 +60,7 @@ function SBLIB.setup_config (config_object)
         print(decoded_res["HPError"])
         print(color.reset)
     end
-    end  
+    end
 end
 
 
@@ -78,7 +80,9 @@ function SBLIB.step (frame)
     -- Calculates reward from config.
     local reward = config.reward_function(last)
 
-    last = config.last()
+    if config.last then
+        last = config.last()
+    end
 
     ----------- CONNECTION TO THE SERVER STEP FUNCTION -------------------------------------
     local payload = {}
@@ -103,7 +107,9 @@ end
 
 
 function SBLIB.start()
-    last = config.last()
+    if config.last then
+        last = config.last()
+    end
 end
 
 
@@ -595,15 +601,15 @@ end
 for i, name in ipairs(hi_names) do
    color.fg[name] = esc .. tostring(90+i-1) .. 'm'
    _M[name] = color.fg[name]
-   color.bg[name] = esc .. tostring(100+i-1) .. 'm'   
+   color.bg[name] = esc .. tostring(100+i-1) .. 'm'
 end
 
 local function fg256(_,n)
-   return esc .. "38;5;" .. n .. 'm'   
+   return esc .. "38;5;" .. n .. 'm'
 end
 
 local function bg256(_,n)
-   return esc .. "48;5;" .. n .. 'm'   
+   return esc .. "48;5;" .. n .. 'm'
 end
 
 setmetatable(color.fg, {__call = fg256})
