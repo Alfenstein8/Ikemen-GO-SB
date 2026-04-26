@@ -80,7 +80,6 @@ function Utils.PrintAllGetters()
   end
 end
 
-
 function Player(n)
   player(n)
   local p = {}
@@ -114,6 +113,7 @@ function Player(n)
   local set = {
     attackmul = attackmul,
   }
+
   p.get = get
   p.set = set
   return p
