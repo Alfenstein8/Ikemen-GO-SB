@@ -69,17 +69,50 @@ function Utils.round(num, decimals)
   local mult = 10 ^ (decimals or 0)
   return math.floor(num * mult + 0.5) / mult
 end
+function Utils.PrintAllGetters()
+  for n = 1, 2 do
+    local p = Player(n)
+    print("=== Player " .. n .. " ===")
+    for name, fn in pairs(p.get) do
+      print(name .. ": " .. tostring(fn()))
+    end
+  end
+end
+
 
 function Player(n)
   player(n)
   local p = {}
   local get = {
-    life = life,
-    attackmul = attackmul
+    life           = life,
+    redlife        = redlife,
+    combocount     = combocount,
+    hitfall        = hitfall,
+    decisiveround  = decisiveround,
+    attack         = attack,
+    attackmul      = attackmul,
+    dizzypoints    = dizzypoints,
+    dizzypointsmax = dizzypointsmax,
+    fighttime      = fighttime,
+    defence        = defence,
+    defencemul     = defencemul,
+    receiveddamage = receiveddamage,
+    receivedhits   = receivedhits,
+    hitcount       = hitcount,
+    roundsexisted  = roundsexisted,
+    roundswon      = roundswon,
+    roundno        = roundno,
+    power          = power,
+    powermax       = powermax,
+    score          = score,
+    scoretotal     = scoretotal,
+    timeremaining  = timeremaining,
+    timeelapsed    = timeelapsed,
+    movecountered  = movecountered,
   }
-
-  local set = {}
-
+  local set = {
+    attackmul = attackmul,
+  }
   p.get = get
   p.set = set
   return p
