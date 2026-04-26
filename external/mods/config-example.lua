@@ -71,6 +71,13 @@ local function post_request_function(endpoint_string, content_type_string, paylo
   return httppost(endpoint_string, content_type_string, payload)
 end
 
+local function log()
+  local log_state = {}
+  for n, v in pairs(Player(1).get) do log_state["p1_"..n] = v end
+  for n, v in pairs(Player(2).get) do log_state["p2_"..n] = v end
+  return log_state
+end
+
 -- Basic setup for RL for ikemon go. All state vars are getters and application functions set game variables
 return {
   name = "ikemon-test",
@@ -100,4 +107,5 @@ return {
     epochs = 5,
     entropy_weight = 0.05
   },
+  log = log
 }

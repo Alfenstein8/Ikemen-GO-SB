@@ -1,9 +1,11 @@
-local SBLIB =  {}
+local SBLIB = {}
 local config = {}
 local last = {}
 local stepCounter = 0
 local done = false
 local sb = {}
+local log_file
+local log_keys = {}
 
 -- Setup the config from a path
 function SBLIB.setup_config_from_path(config_path)
@@ -12,7 +14,7 @@ end
 
 --- Skill Balancer Config Setup Function
 --- @param config_object table
-function SBLIB.setup_config (config_object)
+function SBLIB.setup_config(config_object)
     config = config_object
 
     if config.last then
@@ -55,19 +57,25 @@ function SBLIB.setup_config (config_object)
     local decoded_res = sb.json.decode(res)
     if decoded_res["message"] then
         print("Server response: ", decoded_res["message"])
-    else if decoded_res["HPError"] then
-        print(sb.color.fg.RED .. "Hyper parameter error:")
-        print(decoded_res["HPError"])
-        print(sb.color.reset)
+    else
+        if decoded_res["HPError"] then
+            print(sb.color.fg.RED .. "Hyper parameter error:")
+            print(decoded_res["HPError"])
+            print(sb.color.reset)
+        end
     end
+
+    if config.log then
+        os.execute("mkdir -p logs")
+        local filename = os.date("logs/log_%Y_%m_%d_%H_%M_%S.csv")
+        log_file = sb.log_setup(filename, config.log(), config.actions)
     end
 end
-
 
 ---SBLIB Step Function (Runs every frame_step_interval)
 --- Is responsible for stepping and preparing values for the server to use during RL
 ---@param frame integer
-function SBLIB.step (frame)
+function SBLIB.step(frame)
     -- Checks if config is initialized and gets the game state
     if not config.frame_step_interval then return end
     if frame % config.frame_step_interval ~= 0 then return end
@@ -91,12 +99,21 @@ function SBLIB.step (frame)
     payload.prev_reward = reward
     payload.done = done
     local json_encoded_payload = sb.json.encode(payload)
-    local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
+    local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json",
+        json_encoded_payload)
     local reponse = sb.json.decode(json_adjustment_actions)
     local actions = reponse.action
     sb.apply_actions(actions)
     if config.print_step_summary == true then
         sb.print_step_summary(game_state, normalized_game_state, reward, actions, stepCounter)
+    end
+
+    if config.log then
+        local action_map = {}
+        for i, a in ipairs(config.actions) do
+            action_map["a_" .. a[1]] = actions[i]
+        end
+        sb.log(log_file, config.log(), action_map)
     end
     done = false
 end
@@ -105,13 +122,45 @@ function SBLIB.done()
     done = true
 end
 
-
 function SBLIB.start()
     if config.last then
         last = config.last()
     end
 end
 
+function sb.log_setup(path, log_vars, actions)
+    log_keys = { "Time" }
+    for k, _ in pairs(log_vars) do
+        log_keys[#log_keys + 1] = k
+    end
+    for _, a in ipairs(actions) do
+        log_keys[#log_keys + 1] = "a_" .. a[1]
+    end
+
+    local file = io.open(path, "a")
+    if file then
+        file:write(table.concat(log_keys, ",") .. "\n")
+        file:flush()
+    end
+    return file
+end
+
+function sb.log(file, log_vars, actions)
+    if file then
+        local parts = {}
+        for _, k in ipairs(log_keys) do
+            if k == "Time" then
+                parts[#parts + 1] = tostring(os.time())
+            elseif log_vars[k] then
+                parts[#parts + 1] = tostring(log_vars[k]())
+            else
+                parts[#parts + 1] = tostring(actions[k] or "")
+            end
+        end
+        file:write(table.concat(parts, ",") .. "\n")
+        file:flush()
+    end
+end
 
 --- SBLIB Apply Action function
 --- Applies all action functions from the config in order of the action names calculating during config setup
