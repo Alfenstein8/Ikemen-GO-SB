@@ -1,9 +1,9 @@
-SBLIB =  {}
+local SBLIB =  {}
 local config = {}
 local last = {}
 local stepCounter = 0
 local done = false
-local color = { _NAME = "color" }
+local sb = {}
 
 -- Setup the config from a path
 function SBLIB.setup_config_from_path(config_path)
@@ -48,17 +48,17 @@ function SBLIB.setup_config (config_object)
         hyperparameters = config.hyperparameters,
         learning_rate = config.learning_rate
     }
-    local json_encoded_string = SBLIB.json.encode(server_config)
+    local json_encoded_string = sb.json.encode(server_config)
     local res = config.post_request_function(config.endpoint .. "/config", "application/json", json_encoded_string)
 
     -- Returns server responses and hyper param error if present
-    local decoded_res = SBLIB.json.decode(res)
+    local decoded_res = sb.json.decode(res)
     if decoded_res["message"] then
         print("Server response: ", decoded_res["message"])
     else if decoded_res["HPError"] then
-        print(color.fg.RED .. "Hyper parameter error:")
+        print(sb.color.fg.RED .. "Hyper parameter error:")
         print(decoded_res["HPError"])
-        print(color.reset)
+        print(sb.color.reset)
     end
     end
 end
@@ -71,9 +71,9 @@ function SBLIB.step (frame)
     -- Checks if config is initialized and gets the game state
     if not config.frame_step_interval then return end
     if frame % config.frame_step_interval ~= 0 then return end
-    local game_state = SBLIB.get_game_state()
+    local game_state = sb.get_game_state()
     if not game_state then return end
-    local normalized_game_state = SBLIB.normalize_game_state(game_state)
+    local normalized_game_state = sb.normalize_game_state(game_state)
 
     stepCounter = stepCounter + 1
 
@@ -90,13 +90,13 @@ function SBLIB.step (frame)
     payload.game_state = normalized_game_state
     payload.prev_reward = reward
     payload.done = done
-    local json_encoded_payload = SBLIB.json.encode(payload)
+    local json_encoded_payload = sb.json.encode(payload)
     local json_adjustment_actions = config.post_request_function(config.endpoint .. "/step", "application/json", json_encoded_payload)
-    local reponse = SBLIB.json.decode(json_adjustment_actions)
+    local reponse = sb.json.decode(json_adjustment_actions)
     local actions = reponse.action
-    SBLIB.apply_actions(actions)
+    sb.apply_actions(actions)
     if config.print_step_summary == true then
-        SBLIB.print_step_summary(game_state, normalized_game_state, reward, actions, stepCounter)
+        sb.print_step_summary(game_state, normalized_game_state, reward, actions, stepCounter)
     end
     done = false
 end
@@ -118,7 +118,7 @@ end
 --- Uses adjustment actions which is a vector of activations for certain actions.
 --- 1 is increase, -1 is decrease and 0 is nochange
 ---@param adjustment_actions table
-function SBLIB.apply_actions(adjustment_actions)
+function sb.apply_actions(adjustment_actions)
     for index, value in ipairs(adjustment_actions) do
         config.actions[index][2](value)
     end
@@ -128,7 +128,7 @@ end
 ---SBLIB Get Game State Function
 ---Responsible for iterating over getters from config, which get the game state
 ---@return table
-function SBLIB.get_game_state()
+function sb.get_game_state()
     local game_state = {}
     -- Indexes over all getters for the game state variables
     for _, value in ipairs(config.state) do
@@ -137,12 +137,12 @@ function SBLIB.get_game_state()
     return game_state
 end
 
-function SBLIB.normalize_game_state(game_state)
+function sb.normalize_game_state(game_state)
     local normalized_state = {}
     for index, _ in ipairs(config.state) do
         local v = game_state[index]
         if config.state[index][3] ~= nil then
-            v = map_range(v, config.state[index][3][1], config.state[index][3][2], -1, 1)
+            v = sb.map_range(v, config.state[index][3][1], config.state[index][3][2], -1, 1)
         end
         table.insert(normalized_state, v)
     end
@@ -151,10 +151,10 @@ end
 
 ---Simple function for printing relevant variables in terminal
 ---@param game_state table
----@param reward float
+---@param reward number
 ---@param actions table
 ---@param stepFrame integer
-function SBLIB.print_step_summary(game_state, normalized_game_state, reward, actions, stepFrame)
+function sb.print_step_summary(game_state, normalized_game_state, reward, actions, stepFrame)
     print()
     print("-------- Step Summary --------")
     print("Step: ", stepFrame)
@@ -165,7 +165,7 @@ function SBLIB.print_step_summary(game_state, normalized_game_state, reward, act
 
     -- Print actions if provided
     if actions ~= nil then
-      local arr = string_from_array(actions)
+      local arr = sb.string_from_array(actions)
       print("Action: " .. arr)
     end
     -- Print game state
@@ -179,11 +179,11 @@ end
 
 ------------ HELPER FUNCTIONS ------------------------
 
-function map_range(value, in_min, in_max, out_min, out_max)
+function sb.map_range(value, in_min, in_max, out_min, out_max)
     return (value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 end
 
-function print_table(tbl)
+function sb.print_table(tbl)
     if type(tbl) ~= "table" then
         error("print_table expected table, got " .. type(tbl))
     end
@@ -193,7 +193,7 @@ function print_table(tbl)
     end
 end
 
-function string_from_array(arr)
+function sb.string_from_array(arr)
     if type(arr) ~= "table" then
         error("print_array expected table, got " .. type(arr))
     end
@@ -206,15 +206,8 @@ function string_from_array(arr)
     return str
 end
 
-----------------------
-
-function SBLIB.round(num, decimals)
-  local mult = 10 ^ (decimals or 0)
-  return math.floor(num * mult + 0.5) / mult
-end
-
 -- Embedded json library for encoding tables to JSON data
-SBLIB.json = (function()
+sb.json = (function()
     local json = { _version = "0.1.2" }
 
     -------------------------------------------------------------------------------
@@ -583,6 +576,8 @@ end)()
 
 
 
+local color = { _NAME = "color" }
+sb.color = color
 local _M = color
 
 local esc = string.char(27, 91)
@@ -664,4 +659,4 @@ function color.test()
    print("Try printing " .. color.underline .. _M._NAME .. ".chart()" .. color.reset)
 end
 
-return color
+return SBLIB

@@ -1581,6 +1581,7 @@ end
 start = require('external.script.start')
 options = require('external.script.options')
 menu = require('external.script.menu')
+require('external.script.game-abstraction')
 
 if getCommandLineValue("-storyboard") ~= nil then
 	main.f_storyboard(getCommandLineValue("-storyboard"))
