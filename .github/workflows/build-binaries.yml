@@ -71,6 +71,7 @@ jobs:
         with:
           name: Ikemen_GO_Linux
           path: Ikemen_GO_Linux
+                lib/
 
   build-macos-intel:
     name: macOS Intel
@@ -96,6 +97,7 @@ jobs:
         with:
           name: Ikemen_GO_MacOS
           path: bin/Ikemen_GO_MacOS
+                lib/
 
   build-macos-arm:
     name: macOS Apple Silicon
@@ -121,3 +123,4 @@ jobs:
         with:
           name: Ikemen_GO_MacOSARM
           path: bin/Ikemen_GO_MacOSARM
+                lib/
