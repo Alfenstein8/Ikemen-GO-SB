@@ -113,7 +113,7 @@ function SBLIB.step(frame)
         for i, a in ipairs(config.actions) do
             action_map["a_" .. a[1]] = actions[i]
         end
-        sb.log(log_file, config.log(), action_map)
+        sb.log(log_file, config.log(), action_map, frame, stepCounter)
     end
     done = false
 end
@@ -129,7 +129,7 @@ function SBLIB.start()
 end
 
 function sb.log_setup(path, log_vars, actions)
-    log_keys = { "Time" }
+    log_keys = { "Time", "Frame", "Step" }
     for k, _ in pairs(log_vars) do
         log_keys[#log_keys + 1] = k
     end
@@ -145,23 +145,26 @@ function sb.log_setup(path, log_vars, actions)
     return file
 end
 
-function sb.log(file, log_vars, actions)
-    if file then
-        local parts = {}
-        for _, k in ipairs(log_keys) do
-            if k == "Time" then
-                parts[#parts + 1] = tostring(os.time())
-            elseif log_vars[k] then
-                parts[#parts + 1] = tostring(log_vars[k]())
-            else
-                parts[#parts + 1] = tostring(actions[k] or "")
-            end
-        end
-        file:write(table.concat(parts, ",") .. "\n")
-        file:flush()
+function sb.log(file, log_vars, actions, frame, step)
+  if file then
+    local parts = {}
+    for _, k in ipairs(log_keys) do
+      if k == "Time" then
+        parts[#parts + 1] = tostring(os.time())
+      elseif k == "Frame" then
+        parts[#parts + 1] = tostring(frame)
+      elseif k == "Step" then
+        parts[#parts + 1] = tostring(step)
+      elseif log_vars[k] then
+        parts[#parts + 1] = tostring(log_vars[k]())
+      else
+        parts[#parts + 1] = tostring(actions[k] or "")
+      end
     end
+    file:write(table.concat(parts, ",") .. "\n")
+    file:flush()
+  end
 end
-
 --- SBLIB Apply Action function
 --- Applies all action functions from the config in order of the action names calculating during config setup
 --- Uses adjustment actions which is a vector of activations for certain actions.
