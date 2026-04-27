@@ -32,8 +32,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Ikemen_GO_Linux
-          path: Ikemen_GO_Linux
-                lib/
+          path: |
+           Ikemen_GO_Linux
+           lib/
 
   build-macos-intel:
     name: macOS Intel
@@ -58,8 +59,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Ikemen_GO_MacOS
-          path: bin/Ikemen_GO_MacOS
-                lib/
+          path: |
+           bin/Ikemen_GO_MacOS
+           lib/
 
   build-macos-arm:
     name: macOS Apple Silicon
@@ -84,5 +86,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Ikemen_GO_MacOSARM
-          path: bin/Ikemen_GO_MacOSARM
-                lib/
+          path: |
+           bin/Ikemen_GO_MacOSARM
+           lib/
