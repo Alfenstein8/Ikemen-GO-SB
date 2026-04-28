@@ -120,6 +120,7 @@ function Player(n)
     timeremaining  = fn(n, timeremaining),
     timeelapsed    = fn(n, timeelapsed),
     movecountered  = fn(n, movecountered),
+    guardpoints  = fn(n, guardpoints),
     posx = fn(n,posX),
     posy = fn(n,posY)
   }
