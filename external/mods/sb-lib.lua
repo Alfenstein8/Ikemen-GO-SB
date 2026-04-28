@@ -189,12 +189,38 @@ function sb.get_game_state()
     return game_state
 end
 
+
+local auto_ranges = {}
+function sb.auto_normalize(value, index)
+    local range = auto_ranges[index]
+
+    if not range then
+        range = {min = value, max = value}
+        auto_ranges[index] = range
+    end
+
+    if value < range.min then
+        range.min = value
+    end
+    if value > range.max then
+        range.max = value
+    end
+
+    if range.max == range.min then
+        return 0
+    end
+
+    return sb.map_range(value, range.min, range.max, -1, 1)
+end
+
 function sb.normalize_game_state(game_state)
     local normalized_state = {}
     for index, _ in ipairs(config.state) do
         local v = game_state[index]
         if config.state[index][3] ~= nil then
             v = sb.map_range(v, config.state[index][3][1], config.state[index][3][2], -1, 1)
+        else
+            v = sb.auto_normalize(v, index)
         end
         table.insert(normalized_state, v)
     end
