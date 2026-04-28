@@ -121,7 +121,8 @@ function Player(n)
     timeelapsed    = fn(n, timeelapsed),
     movecountered  = fn(n, movecountered),
     posx = fn(n,posX),
-    posy = fn(n,posY)
+    posy = fn(n,posY),
+    guardpoints  = fn(n, guardpoints),
   }
   local set = {
     attackmul = fn(n, setAttackMul, true),
