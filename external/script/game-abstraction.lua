@@ -80,14 +80,19 @@ function Utils.PrintAllGetters()
   end
 end
 
-local function fn(n, fn)
+local function fn(n, fn, has_param)
+  if has_param then
+    return function(param)
+      player(n)
+      return fn(param)
+    end
+  end
   return function()
     player(n)
     return fn()
   end
 end
 function Player(n)
-  player(n)
   local p = {}
   local get = {
     life           = fn(n, life),
@@ -117,7 +122,11 @@ function Player(n)
     movecountered  = fn(n, movecountered),
   }
   local set = {
-    attackmul = attackmul,
+    attackmul = fn(n, setAttackMul, true),
+    dizzypoints = fn(n, setDizzyPoints, true),
+    guardpoints = fn(n, setGuardPoints, true),
+    life = fn(n, setLife, true),
+    power = fn(n, setPower, true),
   }
 
   p.get = get
