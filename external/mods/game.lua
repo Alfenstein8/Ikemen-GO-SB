@@ -1,4 +1,3 @@
-
 -- Runs once when the game is launched
 function Start()
 

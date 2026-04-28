@@ -69,6 +69,7 @@ function Utils.round(num, decimals)
   local mult = 10 ^ (decimals or 0)
   return math.floor(num * mult + 0.5) / mult
 end
+
 function Utils.PrintAllGetters()
   for n = 1, 2 do
     local p = Player(n)
@@ -79,40 +80,57 @@ function Utils.PrintAllGetters()
   end
 end
 
-
+local function fn(n, fn, has_param)
+  if has_param then
+    return function(param)
+      player(n)
+      return fn(param)
+    end
+  end
+  return function()
+    player(n)
+    return fn()
+  end
+end
 function Player(n)
-  player(n)
   local p = {}
   local get = {
-    life           = life,
-    redlife        = redlife,
-    combocount     = combocount,
-    hitfall        = hitfall,
-    decisiveround  = decisiveround,
-    attack         = attack,
-    attackmul      = attackmul,
-    dizzypoints    = dizzypoints,
-    dizzypointsmax = dizzypointsmax,
-    fighttime      = fighttime,
-    defence        = defence,
-    defencemul     = defencemul,
-    receiveddamage = receiveddamage,
-    receivedhits   = receivedhits,
-    hitcount       = hitcount,
-    roundsexisted  = roundsexisted,
-    roundswon      = roundswon,
-    roundno        = roundno,
-    power          = power,
-    powermax       = powermax,
-    score          = score,
-    scoretotal     = scoretotal,
-    timeremaining  = timeremaining,
-    timeelapsed    = timeelapsed,
-    movecountered  = movecountered,
+    life           = fn(n, life),
+    redlife        = fn(n, redlife),
+    combocount     = fn(n, combocount),
+    hitfall        = fn(n, hitfall),
+    decisiveround  = fn(n, decisiveround),
+    attack         = fn(n, attack),
+    attackmul      = fn(n, attackmul),
+    dizzypoints    = fn(n, dizzypoints),
+    dizzypointsmax = fn(n, dizzypointsmax),
+    fighttime      = fn(n, fighttime),
+    defence        = fn(n, defence),
+    defencemul     = fn(n, defencemul),
+    receiveddamage = fn(n, receiveddamage),
+    receivedhits   = fn(n, receivedhits),
+    hitcount       = fn(n, hitcount),
+    roundsexisted  = fn(n, roundsexisted),
+    roundswon      = fn(n, roundswon),
+    roundno        = fn(n, roundno),
+    power          = fn(n, power),
+    powermax       = fn(n, powermax),
+    score          = fn(n, score),
+    scoretotal     = fn(n, scoretotal),
+    timeremaining  = fn(n, timeremaining),
+    timeelapsed    = fn(n, timeelapsed),
+    movecountered  = fn(n, movecountered),
+    posx = fn(n,posX),
+    posy = fn(n,posY)
   }
   local set = {
-    attackmul = attackmul,
+    attackmul = fn(n, setAttackMul, true),
+    dizzypoints = fn(n, setDizzyPoints, true),
+    guardpoints = fn(n, setGuardPoints, true),
+    life = fn(n, setLife, true),
+    power = fn(n, setPower, true),
   }
+
   p.get = get
   p.set = set
   return p
