@@ -120,6 +120,8 @@ function Player(n)
     timeremaining  = fn(n, timeremaining),
     timeelapsed    = fn(n, timeelapsed),
     movecountered  = fn(n, movecountered),
+    posx = fn(n,posX),
+    posy = fn(n,posY)
   }
   local set = {
     attackmul = fn(n, setAttackMul, true),
