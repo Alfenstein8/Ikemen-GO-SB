@@ -6,8 +6,8 @@ local function reward_function(last)
   local p1Life = Player(1).get.life()
   local p2Life = Player(2).get.life()
 
-  local p1AtkMul = Player(1).get.life()
-  local p2AtkMul = Player(2).get.life()
+  local p1AtkMul = Player(1).get.attackmul()
+  local p2AtkMul = Player(2).get.attackmul()
 
   local d1 = last.p1Life - p1Life
   local d2 = last.p2Life - p2Life
@@ -92,8 +92,8 @@ return {
   train_every = 512,
   last = last,
   state = {
-    { "p1_life",      function() return Player(1).get.life() end,      { 0, 1000 } },
-    { "p1_attackMul", function() return Player(1).get.attackmul() end, { 0, 5 } },
+    { "p1_life",      function() return Player(1).get.life() end},
+    { "p1_attackMul", function() return Player(1).get.attackmul() end},
     { "p2_life",      function() return Player(2).get.life() end,      { 0, 1000 } },
     { "p2_attackMul", function() return Player(2).get.attackmul() end, { 0, 5 } },
   },
