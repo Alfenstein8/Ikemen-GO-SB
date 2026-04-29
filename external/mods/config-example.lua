@@ -6,8 +6,8 @@ local function reward_function(last)
   local p1Life = Player(1).get.life()
   local p2Life = Player(2).get.life()
 
-  local p1AtkMul = Player(1).get.life()
-  local p2AtkMul = Player(2).get.life()
+  local p1AtkMul = Player(1).get.attackmul()
+  local p2AtkMul = Player(2).get.attackmul()
 
   local d1 = last.p1Life - p1Life
   local d2 = last.p2Life - p2Life
