@@ -92,10 +92,10 @@ return {
   train_every = 512,
   last = last,
   state = {
-    { "p1_life",      function() return Player(1).get.life() end},
-    { "p1_attackMul", function() return Player(1).get.attackmul() end},
-    { "p2_life",      function() return Player(2).get.life() end,      { 0, 1000 } },
-    { "p2_attackMul", function() return Player(2).get.attackmul() end, { 0, 5 } },
+    { "p1_life",      Player(1).get.life},
+    { "p1_attackMul", Player(1).get.attackmul},
+    { "p2_life",      Player(2).get.life,      { 0, 1000 } },
+    { "p2_attackMul", Player(2).get.attackmul, { 0, 5 } },
   },
   actions = {
     { "apply_attack_mul_p1", function(v) apply_attack_mul(1, v) end },
