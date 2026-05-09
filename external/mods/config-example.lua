@@ -160,10 +160,6 @@ local function last()
 
 end
 
-----------------------------------------------------------------
--- ACTION APPLICATION
-----------------------------------------------------------------
-
 local function apply_balance(value)
 
   --------------------------------------------------------------
@@ -171,9 +167,7 @@ local function apply_balance(value)
   --------------------------------------------------------------
 
   local action =
-    math.abs(
-      clamp(value or 0, -1, 1)
-    )
+    value or 0
 
   local p1 = Player(1)
   local p2 = Player(2)
@@ -214,13 +208,13 @@ local function apply_balance(value)
     clamp(diff / 700, 0.0, 1.0)
 
   --------------------------------------------------------------
-  -- STRONGER NONLINEAR STRENGTH
+  -- NONLINEAR STRENGTH
   --------------------------------------------------------------
 
   local strength =
     normalized *
     normalized *
-    0.55
+    0.45
 
   --------------------------------------------------------------
   -- DEADZONE
@@ -229,13 +223,6 @@ local function apply_balance(value)
   if diff < 35 then
     strength = 0.0
   end
-
-  --------------------------------------------------------------
-  -- DELTA
-  --------------------------------------------------------------
-
-  local delta =
-    action * strength
 
   --------------------------------------------------------------
   -- TARGET VALUES
@@ -248,7 +235,13 @@ local function apply_balance(value)
     p2Current
 
   --------------------------------------------------------------
-  -- AUTO-DIRECTIONAL BALANCING
+  -- RL POLICY ACTIONS
+  --------------------------------------------------------------
+  --
+  --  1  = BUFF LOSER
+  --  0  = NO INTERVENTION
+  -- -1  = NERF WINNER
+  --
   --------------------------------------------------------------
 
   if diff_signed > 0 then
@@ -257,11 +250,25 @@ local function apply_balance(value)
     -- P1 WINNING
     ------------------------------------------------------------
 
-    p1Target =
-      p1Target - delta
+    if action == -1 then
 
-    p2Target =
-      p2Target + delta
+      ----------------------------------------------------------
+      -- NERF WINNER
+      ----------------------------------------------------------
+
+      p1Target =
+        p1Target - strength
+
+    elseif action == 1 then
+
+      ----------------------------------------------------------
+      -- BUFF LOSER
+      ----------------------------------------------------------
+
+      p2Target =
+        p2Target + strength
+
+    end
 
   elseif diff_signed < 0 then
 
@@ -269,11 +276,25 @@ local function apply_balance(value)
     -- P2 WINNING
     ------------------------------------------------------------
 
-    p1Target =
-      p1Target + delta
+    if action == -1 then
 
-    p2Target =
-      p2Target - delta
+      ----------------------------------------------------------
+      -- NERF WINNER
+      ----------------------------------------------------------
+
+      p2Target =
+        p2Target - strength
+
+    elseif action == 1 then
+
+      ----------------------------------------------------------
+      -- BUFF LOSER
+      ----------------------------------------------------------
+
+      p1Target =
+        p1Target + strength
+
+    end
 
   end
 
@@ -292,7 +313,7 @@ local function apply_balance(value)
     ((1.0 - p2Target) * neutral_decay)
 
   --------------------------------------------------------------
-  -- MUCH LIGHTER DAMPING
+  -- LIGHT DAMPING
   --------------------------------------------------------------
 
   local damping =
@@ -313,7 +334,7 @@ local function apply_balance(value)
       damping_strength)
 
   --------------------------------------------------------------
-  -- LIGHTER SMOOTHING
+  -- LIGHT SMOOTHING
   --------------------------------------------------------------
 
   p1Target =
@@ -326,7 +347,6 @@ local function apply_balance(value)
 
   --------------------------------------------------------------
   -- HARD CLAMP
-
   --------------------------------------------------------------
 
   p1Target =
@@ -334,6 +354,10 @@ local function apply_balance(value)
 
   p2Target =
     clamp(p2Target, 0.5, 2.0)
+
+  --------------------------------------------------------------
+  -- APPLY
+  --------------------------------------------------------------
 
   p1.set.attackmul(p1Target)
   p2.set.attackmul(p2Target)
@@ -369,12 +393,12 @@ return {
   train_every = 512,
   last = last,
   state = {
-    {"p1_life",function()return Player(1).get.life()end,{ 0, 1000 }},
-    {"p2_life",function()return Player(2).get.life()end,{ 0, 1000 }},
-    {"life_diff",function()return life_diff()end,{ -1000, 1000 }},
-    {"abs_life_diff",function()return math.abs(life_diff())end,{ 0, 1000 }},
-    {"p1_attackMul",function()return Player(1).get.attackmul()end,{ 0.5, 2.0 }},
-    {"p2_attackMul",function()return Player(2).get.attackmul()end,{ 0.5, 2.0 }},
+    {"p1_life",function() return Player(1).get.life() end,{ 0, 1000 }},
+    {"p2_life",function() return Player(2).get.life() end,{ 0, 1000 }},
+    {"life_diff",function() return life_diff() end,{ -1000, 1000 }},
+    {"abs_life_diff",function() return math.abs(life_diff()) end,{ 0, 1000 }},
+    {"p1_attackMul",function() return Player(1).get.attackmul() end,{ 0.5, 2.0 }},
+    {"p2_attackMul",function() return Player(2).get.attackmul() end,{ 0.5, 2.0 }},
   },
   actions = {{"balance",function(v) apply_balance (v) end}},
   hyperparameters = {
