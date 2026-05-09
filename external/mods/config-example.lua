@@ -155,8 +155,8 @@ local function apply_balance(value)
   p2Target = (p2Current * 0.15) + (p2Target * 0.85)
 
   -- Clamping dmg to prevent extreme changes
-  p1Target = clamp(p1Target, 0.5, 2.0)
-  p2Target = clamp(p2Target, 0.5, 2.0)
+  -- p1Target = clamp(p1Target, 0.1, 2.0)
+  -- p2Target = clamp(p2Target, 0.1, 2.0)
 
   p1.set.attackmul(p1Target)
   p2.set.attackmul(p2Target)
@@ -194,8 +194,8 @@ return {
     {"p2_life",function() return Player(2).get.life() end,{ 0, 1000 }},
     {"life_diff",function() return life_diff() end,{ -1000, 1000 }},
     {"abs_life_diff",function() return math.abs(life_diff()) end,{ 0, 1000 }},
-    {"p1_attackMul",function() return Player(1).get.attackmul() end,{ 0.5, 2.0 }},
-    {"p2_attackMul",function() return Player(2).get.attackmul() end,{ 0.5, 2.0 }},
+    {"p1_attackMul",function() return Player(1).get.attackmul() end,{ 0.1, 2.0 }},
+    {"p2_attackMul",function() return Player(2).get.attackmul() end,{ 0.1, 2.0 }},
   },
   actions = {{"balance",function(v) apply_balance (v) end}},
   hyperparameters = {
