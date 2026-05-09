@@ -2,123 +2,59 @@ local function clamp(value, min_value, max_value)
   return math.max(min_value, math.min(max_value, value))
 end
 
-----------------------------------------------------------------
 -- LIFE DIFFERENCE
-----------------------------------------------------------------
-
 local function life_diff()
   return Player(1).get.life() - Player(2).get.life()
 end
 
-----------------------------------------------------------------
 -- REWARD FUNCTION
-----------------------------------------------------------------
-
 local function reward_function(last)
-
   local p1 = Player(1).get.life()
   local p2 = Player(2).get.life()
 
-  local current_diff =
-    math.abs(p1 - p2)
+  local current_diff = math.abs(p1 - p2)
 
-  --------------------------------------------------------------
-  -- TEMPORAL SMOOTHING
-  --------------------------------------------------------------
+  -- Smooths life difference over time to reduce noisy reward spikes
+  local smoothed_diff = (last.smoothedDiff * 0.90) + (current_diff * 0.10)
 
-  local smoothed_diff =
-    (last.smoothedDiff * 0.90) +
-    (current_diff * 0.10)
+  -- Positive when the match becomes more balanced over time
+  local improvement = last.smoothedDiff - smoothed_diff
 
-  --------------------------------------------------------------
-  -- TRUE IMPROVEMENT SIGNAL
-  --------------------------------------------------------------
+  -- Measures total damage dealt this step to encourage active fights
+  local total_damage = (last.p1Life - p1) + (last.p2Life - p2)
 
-  local improvement =
-    last.smoothedDiff - smoothed_diff
+  -- Higher when both players have similar remaining health
+  local closeness = 1.0 - clamp(smoothed_diff / 1000,0,1)
 
-  --------------------------------------------------------------
-  -- DAMAGE
-  --------------------------------------------------------------
-
-  local total_damage =
-    (last.p1Life - p1) +
-    (last.p2Life - p2)
-
-  --------------------------------------------------------------
-  -- CLOSENESS
-  --------------------------------------------------------------
-
-  local closeness =
-    1.0 - clamp(
-      smoothed_diff / 1000,
-      0,
-      1
-    )
-
-  --------------------------------------------------------------
-  -- BASE REWARD
-  --------------------------------------------------------------
-
+   -- Base reward
   local reward = 0.0
 
-  --------------------------------------------------------------
-  -- IMPROVEMENT SIGNAL
-  --------------------------------------------------------------
-
+  -- Rewards the agent when the life gap decreases over time
   if improvement > 0 then
-
-    reward =
-      reward + (improvement * 0.030)
-
+    reward = reward + (improvement * 0.030)
   else
-
-    reward =
-      reward + (improvement * 0.010)
-
+    reward = reward + (improvement * 0.010)
   end
 
-  --------------------------------------------------------------
-  -- SMALL BALANCE BONUS
-  --------------------------------------------------------------
+  -- Gives continuous reward for maintaining close matches
+  reward = reward + (closeness * 0.004)
 
-  reward =
-    reward + (closeness * 0.004)
-
-  --------------------------------------------------------------
-  -- DAMAGE INCENTIVE
-  --------------------------------------------------------------
-
+  -- Encourages active combat instead of passive stalling
   if total_damage > 0 then
-
-    reward =
-      reward + math.min(
-        total_damage / 500,
-        0.004
-      )
-
+    reward = reward + math.min(total_damage / 500,0.004)
   else
-
-    reward =
-      reward - 0.003
-
+    reward = reward - 0.003
   end
 
-  --------------------------------------------------------------
-  -- INTERVENTION PENALTY
-  --------------------------------------------------------------
-
+  -- Measures how far balancing changes deviate from neutral values
   local intervention =
     math.abs(Player(1).get.attackmul() - 1.0) +
     math.abs(Player(2).get.attackmul() - 1.0)
 
-  --------------------------------------------------------------
-  -- REDUCED PENALTY
+  -- Penalizes excessive balancing to avoid overly artificial matches
   reward = reward - (intervention * intervention * 0.0004)
 
-  --------------------------------------------------------------
-  -- TERMINAL BONUS
-  --------------------------------------------------------------
+  -- Gives extra reward if the match finishes in a balanced state
   if p1 <= 0 or p2 <= 0 then
     reward = reward + (closeness * 0.08)
   end
@@ -173,6 +109,7 @@ local function apply_balance(value)
   -- Target is the target value we will be manipulating and start at current value
   local p1Target = p1Current
   local p2Target = p2Current
+
   --------------------------------------------------------------
   -- RL POLICY ACTIONS (BUFF NERF SYSTEM)
   --------------------------------------------------------------
@@ -180,7 +117,6 @@ local function apply_balance(value)
   --  0  = NO INTERVENTION
   -- -1  = NERF WINNER
   --------------------------------------------------------------
-
   if diff_signed > 0 then
     -- P1 WINNING
     if action == -1 then
