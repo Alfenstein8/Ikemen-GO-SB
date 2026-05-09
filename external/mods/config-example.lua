@@ -178,9 +178,9 @@ local function log()
   return log_state
 end
 return {
-  name = "ikemen-test-v19",
+  name = "ikemen-test-v20",
   endpoint = "http://localhost:3000",
-  description = "Heuristic with RL intensity",
+  description = "Buff Nerf RL system",
   reward_function = reward_function,
   frame_step_interval = 1,
   print_step_summary = true,
