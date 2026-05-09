@@ -15,30 +15,27 @@ end
 ----------------------------------------------------------------
 
 local function reward_function(last)
+
   local p1 = Player(1).get.life()
   local p2 = Player(2).get.life()
-
-  --------------------------------------------------------------
-  -- CURRENT DIFFERENCE
-  --------------------------------------------------------------
 
   local current_diff =
     math.abs(p1 - p2)
 
   --------------------------------------------------------------
-  -- STRONG TEMPORAL SMOOTHING
+  -- TEMPORAL SMOOTHING
   --------------------------------------------------------------
 
   local smoothed_diff =
-    (last.smoothedDiff * 0.95) +
-    (current_diff * 0.05)
+    (last.smoothedDiff * 0.90) +
+    (current_diff * 0.10)
 
   --------------------------------------------------------------
-  -- IMPROVEMENT SIGNAL
+  -- TRUE IMPROVEMENT SIGNAL
   --------------------------------------------------------------
 
   local improvement =
-    (last.smoothedDiff - smoothed_diff)
+    last.smoothedDiff - smoothed_diff
 
   --------------------------------------------------------------
   -- DAMAGE
@@ -66,19 +63,27 @@ local function reward_function(last)
   local reward = 0.0
 
   --------------------------------------------------------------
-  -- SMALL IMPROVEMENT SIGNAL
+  -- PRIMARY LEARNING SIGNAL
   --------------------------------------------------------------
 
   reward =
-    reward + (improvement * 0.0025)
+    reward + (improvement * 0.015)
 
   --------------------------------------------------------------
-  -- PRIMARY OBJECTIVE:
-  -- KEEP FIGHT CLOSE
+  -- HEAVY PENALTY FOR MAKING THINGS WORSE
+  --------------------------------------------------------------
+
+  if improvement < 0 then
+    reward =
+      reward + (improvement * 0.030)
+  end
+
+  --------------------------------------------------------------
+  -- SMALL BALANCE BONUS
   --------------------------------------------------------------
 
   reward =
-    reward + (closeness * 0.020)
+    reward + (closeness * 0.004)
 
   --------------------------------------------------------------
   -- DAMAGE INCENTIVE
@@ -87,11 +92,12 @@ local function reward_function(last)
   if total_damage > 0 then
     reward =
       reward + math.min(
-        total_damage / 400,
-        0.006
+        total_damage / 500,
+        0.004
       )
   else
-    reward = reward - 0.001
+    reward =
+      reward - 0.003
   end
 
   --------------------------------------------------------------
@@ -102,14 +108,9 @@ local function reward_function(last)
     math.abs(Player(1).get.attackmul() - 1.0) +
     math.abs(Player(2).get.attackmul() - 1.0)
 
-  --------------------------------------------------------------
-  -- STRONGER PENALTY
-  -- PREVENTS OSCILLATION
-  --------------------------------------------------------------
-
   reward =
     reward - (
-      intervention * intervention * 0.02
+      intervention * intervention * 0.006
     )
 
   --------------------------------------------------------------
@@ -117,11 +118,18 @@ local function reward_function(last)
   --------------------------------------------------------------
 
   if p1 <= 0 or p2 <= 0 then
+
     reward =
-      reward + (closeness * 0.15)
+      reward + (closeness * 0.08)
+
   end
 
+  --------------------------------------------------------------
+  -- NORMALIZATION
+  --------------------------------------------------------------
+
   return clamp(reward, -1.0, 1.0)
+
 end
 
 ----------------------------------------------------------------
@@ -129,6 +137,7 @@ end
 ----------------------------------------------------------------
 
 local function last()
+
   local diff =
     math.abs(
       Player(1).get.life() -
@@ -140,6 +149,7 @@ local function last()
     p2Life = Player(2).get.life(),
     smoothedDiff = diff
   }
+
 end
 
 ----------------------------------------------------------------
@@ -147,8 +157,18 @@ end
 ----------------------------------------------------------------
 
 local function apply_balance(value)
+
+  --------------------------------------------------------------
+  -- PPO ACTION
+  --------------------------------------------------------------
+  -- PPO ONLY CONTROLS MAGNITUDE
+  -- NEVER DIRECTION
+  --------------------------------------------------------------
+
   local action =
-    clamp(value or 0, -1, 1)
+    math.abs(
+      clamp(value or 0, -1, 1)
+    )
 
   local p1 = Player(1)
   local p2 = Player(2)
@@ -158,77 +178,158 @@ local function apply_balance(value)
   --------------------------------------------------------------
 
   local p1Current =
-    p1.get.attackmul()
+    clamp(
+      p1.get.attackmul(),
+      0.75,
+      1.25
+    )
 
   local p2Current =
-    p2.get.attackmul()
+    clamp(
+      p2.get.attackmul(),
+      0.75,
+      1.25
+    )
 
   --------------------------------------------------------------
   -- LIFE DIFFERENCE
   --------------------------------------------------------------
 
+  local diff_signed =
+    life_diff()
+
   local diff =
-    math.abs(life_diff())
+    math.abs(diff_signed)
 
   --------------------------------------------------------------
-  -- CONTROL STRENGTH
+  -- NONLINEAR STRENGTH
   --------------------------------------------------------------
+
+  local normalized =
+    clamp(diff / 400, 0.0, 1.0)
 
   local strength =
-    clamp(
-      diff / 1200,
-      0.0,
-      0.12
-    )
+    normalized * normalized * 0.12
 
   --------------------------------------------------------------
   -- DEADZONE
   --------------------------------------------------------------
 
-  if diff < 80 then
+  if diff < 35 then
     strength = 0.0
   end
 
   --------------------------------------------------------------
-  -- MOMENTARY IMPULSE
+  -- DELTA
+  --------------------------------------------------------------
+  -- ALWAYS POSITIVE
   --------------------------------------------------------------
 
-  local impulse =
+  local delta =
     action * strength
 
   --------------------------------------------------------------
-  -- APPLY IMPULSE
+  -- TARGET VALUES
   --------------------------------------------------------------
 
-  local p1Next =
-    p1Current + impulse
+  local p1Target =
+    p1Current
 
-  local p2Next =
-    p2Current - impulse
-
-  --------------------------------------------------------------
-  -- NATURAL DECAY BACK TO 1.0
-  --------------------------------------------------------------
-
-  local decay = 0.08
-
-  p1Next =
-    p1Next + ((1.0 - p1Next) * decay)
-
-  p2Next =
-    p2Next + ((1.0 - p2Next) * decay)
+  local p2Target =
+    p2Current
 
   --------------------------------------------------------------
-  -- FINAL CLAMP
+  -- AUTO-DIRECTIONAL BALANCING
   --------------------------------------------------------------
 
-  p1.set.attackmul(
-    clamp(p1Next, 0.75, 1.25)
-  )
+  if diff_signed > 0 then
 
-  p2.set.attackmul(
-    clamp(p2Next, 0.75, 1.25)
-  )
+    ------------------------------------------------------------
+    -- P1 WINNING
+    -- NERF P1
+    -- BUFF P2
+    ------------------------------------------------------------
+
+    p1Target =
+      p1Target - delta
+
+    p2Target =
+      p2Target + delta
+
+  elseif diff_signed < 0 then
+
+    ------------------------------------------------------------
+    -- P2 WINNING
+    -- BUFF P1
+    -- NERF P2
+    ------------------------------------------------------------
+
+    p1Target =
+      p1Target + delta
+
+    p2Target =
+      p2Target - delta
+
+  end
+
+  --------------------------------------------------------------
+  -- RETURN TO NEUTRAL
+  --------------------------------------------------------------
+
+  local neutral_decay = 0.08
+
+  p1Target =
+    p1Target +
+    ((1.0 - p1Target) * neutral_decay)
+
+  p2Target =
+    p2Target +
+    ((1.0 - p2Target) * neutral_decay)
+
+  --------------------------------------------------------------
+  -- OVERSHOOT DAMPING
+  --------------------------------------------------------------
+
+  local damping =
+    1.0 - clamp(diff / 300, 0.0, 0.85)
+
+  p1Target =
+    p1Target +
+    ((1.0 - p1Target) * damping * 0.25)
+
+  p2Target =
+    p2Target +
+    ((1.0 - p2Target) * damping * 0.25)
+
+  --------------------------------------------------------------
+  -- LOW PASS FILTER
+  --------------------------------------------------------------
+
+  p1Target =
+    (p1Current * 0.65) +
+    (p1Target * 0.35)
+
+  p2Target =
+    (p2Current * 0.65) +
+    (p2Target * 0.35)
+
+  --------------------------------------------------------------
+  -- HARD CLAMP
+  --------------------------------------------------------------
+
+  p1Target =
+    clamp(p1Target, 0.75, 1.25)
+
+  p2Target =
+    clamp(p2Target, 0.75, 1.25)
+
+  --------------------------------------------------------------
+  -- APPLY
+  --------------------------------------------------------------
+
+  p1.set.attackmul(p1Target)
+  p2.set.attackmul(p2Target)
+
 end
 
 ----------------------------------------------------------------
@@ -252,6 +353,7 @@ end
 ----------------------------------------------------------------
 
 local function log()
+
   local log_state = {}
 
   for n, v in pairs(Player(1).get) do
@@ -263,6 +365,7 @@ local function log()
   end
 
   return log_state
+
 end
 
 ----------------------------------------------------------------
@@ -270,12 +373,13 @@ end
 ----------------------------------------------------------------
 
 return {
-  name = "ikemen-balanced-ppo-v13-damped",
+
+  name = "ikemen-balanced-ppo-v17-fixed-direction",
 
   endpoint = "http://localhost:3000",
 
   description =
-    "Damped PPO discrete fight balancing",
+    "Magnitude-only PPO directional balancing",
 
   reward_function = reward_function,
 
@@ -303,6 +407,7 @@ return {
   ----------------------------------------------------------------
 
   state = {
+
     {
       "p1_life",
       function()
@@ -370,13 +475,18 @@ return {
   ----------------------------------------------------------------
 
   hyperparameters = {
+
     gamma = 0.995,
 
-    learning_rate = 0.00003,
+    learning_rate = 0.00005,
 
-    epochs = 3,
+    epochs = 4,
 
-    entropy_weight = 0.010
+    --------------------------------------------------------------
+    -- HIGHER ENTROPY
+    --------------------------------------------------------------
+
+    entropy_weight = 0.015
   },
 
   log = log
