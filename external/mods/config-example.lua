@@ -326,6 +326,7 @@ local function apply_balance(value)
 
   --------------------------------------------------------------
   -- HARD CLAMP
+
   --------------------------------------------------------------
 
   p1Target =
@@ -334,167 +335,53 @@ local function apply_balance(value)
   p2Target =
     clamp(p2Target, 0.5, 2.0)
 
-  --------------------------------------------------------------
-  -- APPLY
-  --------------------------------------------------------------
-
   p1.set.attackmul(p1Target)
   p2.set.attackmul(p2Target)
 
 end
 
-----------------------------------------------------------------
--- HTTP
-----------------------------------------------------------------
 
-local function post_request_function(
-  endpoint_string,
-  content_type_string,
-  payload
-)
-  return httppost(
-    endpoint_string,
-    content_type_string,
-    payload
-  )
+local function post_request_function(endpoint_string,content_type_string,payload)
+return httppost(endpoint_string,content_type_string,payload)
 end
 
-----------------------------------------------------------------
--- LOGGING
-----------------------------------------------------------------
-
 local function log()
-
   local log_state = {}
-
   for n, v in pairs(Player(1).get) do
     log_state["p1_" .. n] = v
   end
-
   for n, v in pairs(Player(2).get) do
     log_state["p2_" .. n] = v
   end
-
   return log_state
-
 end
 
-----------------------------------------------------------------
--- CONFIG
-----------------------------------------------------------------
-
 return {
-
-  name = "ikemen-balanced-ppo-v19-aggressive-rubberband",
-
+  name = "ikemen-test-v19",
   endpoint = "http://localhost:3000",
-
-  description =
-    "Aggressive PPO rubberband balancing",
-
+  description = "Heuristic with RL intensity",
   reward_function = reward_function,
-
   frame_step_interval = 1,
-
   print_step_summary = true,
-
   allow_overwrite = true,
-
   allow_rename = false,
-
-  post_request_function =
-    post_request_function,
-
-  --------------------------------------------------------------
-  -- TRAINING
-  --------------------------------------------------------------
-
+  post_request_function = post_request_function,
   train_every = 512,
-
   last = last,
-
-  ----------------------------------------------------------------
-  -- STATE
-  ----------------------------------------------------------------
-
   state = {
-
-    {
-      "p1_life",
-      function()
-        return Player(1).get.life()
-      end,
-      { 0, 1000 }
-    },
-
-    {
-      "p2_life",
-      function()
-        return Player(2).get.life()
-      end,
-      { 0, 1000 }
-    },
-
-    {
-      "life_diff",
-      function()
-        return life_diff()
-      end,
-      { -1000, 1000 }
-    },
-
-    {
-      "abs_life_diff",
-      function()
-        return math.abs(life_diff())
-      end,
-      { 0, 1000 }
-    },
-
-    {
-      "p1_attackMul",
-      function()
-        return Player(1).get.attackmul()
-      end,
-      { 0.5, 2.0 }
-    },
-
-    {
-      "p2_attackMul",
-      function()
-        return Player(2).get.attackmul()
-      end,
-      { 0.5, 2.0 }
-    },
+    {"p1_life",function()return Player(1).get.life()end,{ 0, 1000 }},
+    {"p2_life",function()return Player(2).get.life()end,{ 0, 1000 }},
+    {"life_diff",function()return life_diff()end,{ -1000, 1000 }},
+    {"abs_life_diff",function()return math.abs(life_diff())end,{ 0, 1000 }},
+    {"p1_attackMul",function()return Player(1).get.attackmul()end,{ 0.5, 2.0 }},
+    {"p2_attackMul",function()return Player(2).get.attackmul()end,{ 0.5, 2.0 }},
   },
-
-  ----------------------------------------------------------------
-  -- ACTIONS
-  ----------------------------------------------------------------
-
-  actions = {
-    {
-      "balance",
-      function(v)
-        apply_balance(v)
-      end
-    }
-  },
-
-  ----------------------------------------------------------------
-  -- PPO HYPERPARAMETERS
-  ----------------------------------------------------------------
-
+  actions = {{"balance",function(v) apply_balance (v) end}},
   hyperparameters = {
-
     gamma = 0.995,
-
     learning_rate = 0.00005,
-
     epochs = 4,
-
     entropy_weight = 0.020
   },
-
   log = log
 }
