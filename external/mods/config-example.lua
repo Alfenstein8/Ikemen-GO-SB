@@ -63,19 +63,19 @@ local function reward_function(last)
   local reward = 0.0
 
   --------------------------------------------------------------
-  -- PRIMARY LEARNING SIGNAL
+  -- IMPROVEMENT SIGNAL
   --------------------------------------------------------------
 
-  reward =
-    reward + (improvement * 0.015)
+  if improvement > 0 then
 
-  --------------------------------------------------------------
-  -- HEAVY PENALTY FOR MAKING THINGS WORSE
-  --------------------------------------------------------------
-
-  if improvement < 0 then
     reward =
       reward + (improvement * 0.030)
+
+  else
+
+    reward =
+      reward + (improvement * 0.010)
+
   end
 
   --------------------------------------------------------------
@@ -90,14 +90,18 @@ local function reward_function(last)
   --------------------------------------------------------------
 
   if total_damage > 0 then
+
     reward =
       reward + math.min(
         total_damage / 500,
         0.004
       )
+
   else
+
     reward =
       reward - 0.003
+
   end
 
   --------------------------------------------------------------
@@ -110,7 +114,7 @@ local function reward_function(last)
 
   reward =
     reward - (
-      intervention * intervention * 0.006
+      intervention * intervention * 0.0015
     )
 
   --------------------------------------------------------------
@@ -161,9 +165,6 @@ local function apply_balance(value)
   --------------------------------------------------------------
   -- PPO ACTION
   --------------------------------------------------------------
-  -- PPO ONLY CONTROLS MAGNITUDE
-  -- NEVER DIRECTION
-  --------------------------------------------------------------
 
   local action =
     math.abs(
@@ -180,15 +181,15 @@ local function apply_balance(value)
   local p1Current =
     clamp(
       p1.get.attackmul(),
-      0.75,
-      1.25
+      0.5,
+      2.0
     )
 
   local p2Current =
     clamp(
       p2.get.attackmul(),
-      0.75,
-      1.25
+      0.5,
+      2.0
     )
 
   --------------------------------------------------------------
@@ -206,10 +207,13 @@ local function apply_balance(value)
   --------------------------------------------------------------
 
   local normalized =
-    clamp(diff / 400, 0.0, 1.0)
+    clamp(diff / 700, 0.0, 1.0)
 
   local strength =
-    normalized * normalized * 0.12
+    normalized *
+    normalized *
+    normalized *
+    0.35
 
   --------------------------------------------------------------
   -- DEADZONE
@@ -221,8 +225,6 @@ local function apply_balance(value)
 
   --------------------------------------------------------------
   -- DELTA
-  --------------------------------------------------------------
-  -- ALWAYS POSITIVE
   --------------------------------------------------------------
 
   local delta =
@@ -246,8 +248,6 @@ local function apply_balance(value)
 
     ------------------------------------------------------------
     -- P1 WINNING
-    -- NERF P1
-    -- BUFF P2
     ------------------------------------------------------------
 
     p1Target =
@@ -260,8 +260,6 @@ local function apply_balance(value)
 
     ------------------------------------------------------------
     -- P2 WINNING
-    -- BUFF P1
-    -- NERF P2
     ------------------------------------------------------------
 
     p1Target =
@@ -276,7 +274,7 @@ local function apply_balance(value)
   -- RETURN TO NEUTRAL
   --------------------------------------------------------------
 
-  local neutral_decay = 0.08
+  local neutral_decay = 0.02
 
   p1Target =
     p1Target +
@@ -291,7 +289,7 @@ local function apply_balance(value)
   --------------------------------------------------------------
 
   local damping =
-    1.0 - clamp(diff / 300, 0.0, 0.85)
+    1.0 - clamp(diff / 600, 0.0, 0.65)
 
   p1Target =
     p1Target +
@@ -306,22 +304,22 @@ local function apply_balance(value)
   --------------------------------------------------------------
 
   p1Target =
-    (p1Current * 0.65) +
-    (p1Target * 0.35)
+    (p1Current * 0.40) +
+    (p1Target * 0.60)
 
   p2Target =
-    (p2Current * 0.65) +
-    (p2Target * 0.35)
+    (p2Current * 0.40) +
+    (p2Target * 0.60)
 
   --------------------------------------------------------------
   -- HARD CLAMP
   --------------------------------------------------------------
 
   p1Target =
-    clamp(p1Target, 0.75, 1.25)
+    clamp(p1Target, 0.5, 2.0)
 
   p2Target =
-    clamp(p2Target, 0.75, 1.25)
+    clamp(p2Target, 0.5, 2.0)
 
   --------------------------------------------------------------
   -- APPLY
@@ -374,12 +372,12 @@ end
 
 return {
 
-  name = "ikemen-balanced-ppo-v17-fixed-direction",
+  name = "ikemen-balanced-ppo-v18-rubberband",
 
   endpoint = "http://localhost:3000",
 
   description =
-    "Magnitude-only PPO directional balancing",
+    "Strong nonlinear rubberband PPO balancing",
 
   reward_function = reward_function,
 
@@ -445,7 +443,7 @@ return {
       function()
         return Player(1).get.attackmul()
       end,
-      { 0.75, 1.25 }
+      { 0.5, 2.0 }
     },
 
     {
@@ -453,7 +451,7 @@ return {
       function()
         return Player(2).get.attackmul()
       end,
-      { 0.75, 1.25 }
+      { 0.5, 2.0 }
     },
   },
 
@@ -481,10 +479,6 @@ return {
     learning_rate = 0.00005,
 
     epochs = 4,
-
-    --------------------------------------------------------------
-    -- HIGHER ENTROPY
-    --------------------------------------------------------------
 
     entropy_weight = 0.015
   },
