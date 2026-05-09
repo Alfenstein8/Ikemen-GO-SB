@@ -114,36 +114,20 @@ local function reward_function(last)
 
   --------------------------------------------------------------
   -- REDUCED PENALTY
-  --------------------------------------------------------------
-
-  reward =
-    reward - (
-      intervention * intervention * 0.0004
-    )
+  reward = reward - (intervention * intervention * 0.0004)
 
   --------------------------------------------------------------
   -- TERMINAL BONUS
   --------------------------------------------------------------
-
   if p1 <= 0 or p2 <= 0 then
-
-    reward =
-      reward + (closeness * 0.08)
-
+    reward = reward + (closeness * 0.08)
   end
 
-  --------------------------------------------------------------
-  -- NORMALIZATION
-  --------------------------------------------------------------
-
+  -- Clamping reward between -1 and 1 since ppo likes this
   return clamp(reward, -1.0, 1.0)
-
 end
 
-----------------------------------------------------------------
--- LAST STATE SNAPSHOT
-----------------------------------------------------------------
-
+-- Snapshot of the last state
 local function last()
 
   local diff =
@@ -161,203 +145,82 @@ local function last()
 end
 
 local function apply_balance(value)
-
-  --------------------------------------------------------------
-  -- PPO ACTION
-  --------------------------------------------------------------
-
-  local action =
-    value or 0
-
+  local action = value or 0
   local p1 = Player(1)
   local p2 = Player(2)
 
-  --------------------------------------------------------------
-  -- CURRENT VALUES
-  --------------------------------------------------------------
+  -- Current value of in game attackmul
+  local p1Current = clamp(p1.get.attackmul(),0.5,2.0)
+  local p2Current = clamp(p2.get.attackmul(),0.5,2.0)
 
-  local p1Current =
-    clamp(
-      p1.get.attackmul(),
-      0.5,
-      2.0
-    )
+  -- Simple life difference of players
+  local diff_signed = life_diff()
+  local diff = math.abs(diff_signed)
 
-  local p2Current =
-    clamp(
-      p2.get.attackmul(),
-      0.5,
-      2.0
-    )
-
-  --------------------------------------------------------------
-  -- LIFE DIFFERENCE
-  --------------------------------------------------------------
-
-  local diff_signed =
-    life_diff()
-
-  local diff =
-    math.abs(diff_signed)
-
-  --------------------------------------------------------------
   -- NORMALIZED DIFFERENCE
-  --------------------------------------------------------------
+  -- Uses 700 instead of full 1000 HP so balancing reaches maximum strength
+  -- earlier, allowing meaningful intervention before a match becomes unwinnable
+  local normalized = clamp(diff / 700, 0.0, 1.0)
 
-  local normalized =
-    clamp(diff / 700, 0.0, 1.0)
+  -- Increases balancing strength exponentially as the life gap becomes larger
+  local strength = normalized * normalized * 0.45
 
-  --------------------------------------------------------------
-  -- NONLINEAR STRENGTH
-  --------------------------------------------------------------
-
-  local strength =
-    normalized *
-    normalized *
-    0.45
-
-  --------------------------------------------------------------
   -- DEADZONE
-  --------------------------------------------------------------
-
   if diff < 35 then
     strength = 0.0
   end
 
+  -- Target is the target value we will be manipulating and start at current value
+  local p1Target = p1Current
+  local p2Target = p2Current
   --------------------------------------------------------------
-  -- TARGET VALUES
+  -- RL POLICY ACTIONS (BUFF NERF SYSTEM)
   --------------------------------------------------------------
-
-  local p1Target =
-    p1Current
-
-  local p2Target =
-    p2Current
-
-  --------------------------------------------------------------
-  -- RL POLICY ACTIONS
-  --------------------------------------------------------------
-  --
   --  1  = BUFF LOSER
   --  0  = NO INTERVENTION
   -- -1  = NERF WINNER
-  --
   --------------------------------------------------------------
 
   if diff_signed > 0 then
-
-    ------------------------------------------------------------
     -- P1 WINNING
-    ------------------------------------------------------------
-
     if action == -1 then
-
-      ----------------------------------------------------------
       -- NERF WINNER
-      ----------------------------------------------------------
-
-      p1Target =
-        p1Target - strength
-
+      p1Target = p1Target - strength
     elseif action == 1 then
-
-      ----------------------------------------------------------
       -- BUFF LOSER
-      ----------------------------------------------------------
-
-      p2Target =
-        p2Target + strength
-
+      p2Target = p2Target + strength
     end
-
   elseif diff_signed < 0 then
-
-    ------------------------------------------------------------
     -- P2 WINNING
-    ------------------------------------------------------------
-
     if action == -1 then
-
-      ----------------------------------------------------------
       -- NERF WINNER
-      ----------------------------------------------------------
-
-      p2Target =
-        p2Target - strength
-
+      p2Target = p2Target - strength
     elseif action == 1 then
-
-      ----------------------------------------------------------
       -- BUFF LOSER
-      ----------------------------------------------------------
-
-      p1Target =
-        p1Target + strength
-
+      p1Target = p1Target + strength
     end
-
   end
 
-  --------------------------------------------------------------
-  -- VERY LIGHT RETURN TO NEUTRAL
-  --------------------------------------------------------------
-
+  -- Slowly moves attack multipliers back toward default values over time
   local neutral_decay = 0.003
+  p1Target = p1Target + ((1.0 - p1Target) * neutral_decay)
+  p2Target = p2Target + ((1.0 - p2Target) * neutral_decay)
 
-  p1Target =
-    p1Target +
-    ((1.0 - p1Target) * neutral_decay)
-
-  p2Target =
-    p2Target +
-    ((1.0 - p2Target) * neutral_decay)
-
-  --------------------------------------------------------------
-  -- LIGHT DAMPING
-  --------------------------------------------------------------
-
-  local damping =
-    1.0 - clamp(diff / 600, 0.0, 0.65)
-
+  -- This damping gradually pulls back the correction force toward neutral values to
+  ---- reduce overshooting
+  local damping = 1.0 - clamp(diff / 600, 0.0, 0.65)
   local damping_strength = 0.08
+  p1Target = p1Target + ((1.0 - p1Target) * damping * damping_strength)
+  p2Target = p2Target +((1.0 - p2Target) * damping * damping_strength)
 
-  p1Target =
-    p1Target +
-    ((1.0 - p1Target) *
-      damping *
-      damping_strength)
+  -- Light smoothing blends old and new values to prevent 
+  ---- sudden balancing spikes or jitter
+  p1Target = (p1Current * 0.15) + (p1Target * 0.85)
+  p2Target = (p2Current * 0.15) + (p2Target * 0.85)
 
-  p2Target =
-    p2Target +
-    ((1.0 - p2Target) *
-      damping *
-      damping_strength)
-
-  --------------------------------------------------------------
-  -- LIGHT SMOOTHING
-  --------------------------------------------------------------
-
-  p1Target =
-    (p1Current * 0.15) +
-    (p1Target * 0.85)
-
-  p2Target =
-    (p2Current * 0.15) +
-    (p2Target * 0.85)
-
-  --------------------------------------------------------------
-  -- HARD CLAMP
-  --------------------------------------------------------------
-
-  p1Target =
-    clamp(p1Target, 0.5, 2.0)
-
-  p2Target =
-    clamp(p2Target, 0.5, 2.0)
-
-  --------------------------------------------------------------
-  -- APPLY
-  --------------------------------------------------------------
+  -- Clamping dmg to prevent extreme changes
+  p1Target = clamp(p1Target, 0.5, 2.0)
+  p2Target = clamp(p2Target, 0.5, 2.0)
 
   p1.set.attackmul(p1Target)
   p2.set.attackmul(p2Target)
@@ -368,7 +231,6 @@ end
 local function post_request_function(endpoint_string,content_type_string,payload)
 return httppost(endpoint_string,content_type_string,payload)
 end
-
 local function log()
   local log_state = {}
   for n, v in pairs(Player(1).get) do
@@ -379,7 +241,6 @@ local function log()
   end
   return log_state
 end
-
 return {
   name = "ikemen-test-v19",
   endpoint = "http://localhost:3000",
