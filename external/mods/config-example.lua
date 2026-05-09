@@ -112,9 +112,13 @@ local function reward_function(last)
     math.abs(Player(1).get.attackmul() - 1.0) +
     math.abs(Player(2).get.attackmul() - 1.0)
 
+  --------------------------------------------------------------
+  -- REDUCED PENALTY
+  --------------------------------------------------------------
+
   reward =
     reward - (
-      intervention * intervention * 0.0015
+      intervention * intervention * 0.0004
     )
 
   --------------------------------------------------------------
@@ -203,17 +207,20 @@ local function apply_balance(value)
     math.abs(diff_signed)
 
   --------------------------------------------------------------
-  -- NONLINEAR STRENGTH
+  -- NORMALIZED DIFFERENCE
   --------------------------------------------------------------
 
   local normalized =
     clamp(diff / 700, 0.0, 1.0)
 
+  --------------------------------------------------------------
+  -- STRONGER NONLINEAR STRENGTH
+  --------------------------------------------------------------
+
   local strength =
     normalized *
     normalized *
-    normalized *
-    0.35
+    0.55
 
   --------------------------------------------------------------
   -- DEADZONE
@@ -271,10 +278,10 @@ local function apply_balance(value)
   end
 
   --------------------------------------------------------------
-  -- RETURN TO NEUTRAL
+  -- VERY LIGHT RETURN TO NEUTRAL
   --------------------------------------------------------------
 
-  local neutral_decay = 0.02
+  local neutral_decay = 0.003
 
   p1Target =
     p1Target +
@@ -285,31 +292,37 @@ local function apply_balance(value)
     ((1.0 - p2Target) * neutral_decay)
 
   --------------------------------------------------------------
-  -- OVERSHOOT DAMPING
+  -- MUCH LIGHTER DAMPING
   --------------------------------------------------------------
 
   local damping =
     1.0 - clamp(diff / 600, 0.0, 0.65)
 
+  local damping_strength = 0.08
+
   p1Target =
     p1Target +
-    ((1.0 - p1Target) * damping * 0.25)
+    ((1.0 - p1Target) *
+      damping *
+      damping_strength)
 
   p2Target =
     p2Target +
-    ((1.0 - p2Target) * damping * 0.25)
+    ((1.0 - p2Target) *
+      damping *
+      damping_strength)
 
   --------------------------------------------------------------
-  -- LOW PASS FILTER
+  -- LIGHTER SMOOTHING
   --------------------------------------------------------------
 
   p1Target =
-    (p1Current * 0.40) +
-    (p1Target * 0.60)
+    (p1Current * 0.15) +
+    (p1Target * 0.85)
 
   p2Target =
-    (p2Current * 0.40) +
-    (p2Target * 0.60)
+    (p2Current * 0.15) +
+    (p2Target * 0.85)
 
   --------------------------------------------------------------
   -- HARD CLAMP
@@ -372,12 +385,12 @@ end
 
 return {
 
-  name = "ikemen-balanced-ppo-v18-rubberband",
+  name = "ikemen-balanced-ppo-v19-aggressive-rubberband",
 
   endpoint = "http://localhost:3000",
 
   description =
-    "Strong nonlinear rubberband PPO balancing",
+    "Aggressive PPO rubberband balancing",
 
   reward_function = reward_function,
 
@@ -480,7 +493,7 @@ return {
 
     epochs = 4,
 
-    entropy_weight = 0.015
+    entropy_weight = 0.020
   },
 
   log = log
