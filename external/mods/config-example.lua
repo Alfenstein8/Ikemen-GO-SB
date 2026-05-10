@@ -52,7 +52,7 @@ local function reward_function(last)
     math.abs(Player(2).get.attackmul() - 1.0)
 
   -- Penalizes excessive balancing to avoid overly artificial matches
-  reward = reward - (intervention * intervention * 0.0004)
+  reward = reward - (intervention * intervention * 0.0006)
 
   -- Gives extra reward if the match finishes in a balanced state
   if p1 <= 0 or p2 <= 0 then
@@ -99,10 +99,10 @@ local function apply_balance(value)
   local normalized = clamp(diff / 700, 0.0, 1.0)
 
   -- Increases balancing strength exponentially as the life gap becomes larger
-  local strength = normalized * normalized * 0.45
+  local strength = normalized * normalized * 0.22
 
   -- DEADZONE
-  if diff < 35 then
+  if diff < 60 then
     strength = 0.0
   end
 
@@ -145,7 +145,7 @@ local function apply_balance(value)
   -- This damping gradually pulls back the correction force toward neutral values to
   ---- reduce overshooting
   local damping = 1.0 - clamp(diff / 600, 0.0, 0.65)
-  local damping_strength = 0.08
+  local damping_strength = 0.12
   p1Target = p1Target + ((1.0 - p1Target) * damping * damping_strength)
   p2Target = p2Target +((1.0 - p2Target) * damping * damping_strength)
 
@@ -155,8 +155,8 @@ local function apply_balance(value)
   p2Target = (p2Current * 0.15) + (p2Target * 0.85)
 
   -- Clamping dmg to prevent extreme changes
-  p1Target = clamp(p1Target, 0.5, 2.0)
-  p2Target = clamp(p2Target, 0.5, 2.0)
+  p1Target = clamp(p1Target, 0.1, 2.0)
+  p2Target = clamp(p2Target, 0.1, 2.0)
 
   p1.set.attackmul(p1Target)
   p2.set.attackmul(p2Target)
@@ -182,7 +182,7 @@ return {
   endpoint = "http://localhost:3000",
   description = "Buff Nerf RL system",
   reward_function = reward_function,
-  frame_step_interval = 1,
+  frame_step_interval = 10,
   print_step_summary = true,
   allow_overwrite = true,
   allow_rename = false,
@@ -194,8 +194,8 @@ return {
     {"p2_life",function() return Player(2).get.life() end,{ 0, 1000 }},
     {"life_diff",function() return life_diff() end,{ -1000, 1000 }},
     {"abs_life_diff",function() return math.abs(life_diff()) end,{ 0, 1000 }},
-    {"p1_attackMul",function() return Player(1).get.attackmul() end,{ 0.5, 2.0 }},
-    {"p2_attackMul",function() return Player(2).get.attackmul() end,{ 0.5, 2.0 }},
+    {"p1_attackMul",function() return Player(1).get.attackmul() end,{ 0.1, 2.0 }},
+    {"p2_attackMul",function() return Player(2).get.attackmul() end,{ 0.1, 2.0 }},
   },
   actions = {{"balance",function(v) apply_balance (v) end}},
   hyperparameters = {
