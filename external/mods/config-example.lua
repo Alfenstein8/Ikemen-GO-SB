@@ -14,7 +14,12 @@ local function reward_function()
   local p2Life = Player(2).get.life()
   local diff = math.abs(p1Life - p2Life)
   local reward = map_range(1000 - diff, 0, 1000, 0, 1)
-  return clamp(reward, 0, 1)
+  local time = map_range(roundtime(),0,getRoundTime(),0,0.5)
+  -- print("time reward:",time)
+
+  -- return map_range(Player(1).get.attackmul() - Player(2).get.attackmul(), -3.0, 3.0, -1, 1)
+
+  return map_range(reward + time, 0, 1.5, -1, 1)
 end
 
 -- Snapshot of the last state
@@ -27,7 +32,7 @@ end
 
 local function apply_atkmul(n, action)
   local p = Player(n)
-  local impact = 3
+  local impact = 0.1
   local change = action * impact
   local current = p.get.attackmul()
   p.set.attackmul(clamp(current + change, 0.1, 3.0))
@@ -62,22 +67,29 @@ return {
   state = {
     { "p1_life",      Player(1).get.life,      { 0, 1000 } },
     { "p2_life",      Player(2).get.life,      { 0, 1000 } },
-    { "p1_attackMul", Player(1).get.attackmul, { 0.1, 2.0 } },
-    { "p2_attackMul", Player(2).get.attackmul, { 0.1, 2.0 } },
+    { "p1_attackMul", Player(1).get.attackmul, { 0.1, 3.0 } },
+    { "p2_attackMul", Player(2).get.attackmul, { 0.1, 3.0 } },
+    { "round_time", roundtime, { 0, 5940 } },
+    { "p1_power", Player(1).get.power, { 0, 1000.0 } },
+    { "p2_power", Player(2).get.power, { 0, 1000.0 } },
+    { "p1_receivedDmg", Player(1).get.receiveddamage },
+    { "p2_receivedDmg", Player(2).get.receiveddamage },
+    { "p1_score", Player(1).get.score, {0,20000} },
+    { "p2_score", Player(2).get.score, {0,20000}},
   },
   actions = {
     { "p1_atkmul", function(v) return apply_atkmul(1, v) end },
     { "p2_atkmul", function(v) return apply_atkmul(2, v) end }
   },
   hyperparameters = {
-    gamma = 0.995,
+    gamma = 0.95,
     lambda = 0.95,
-    epsilon_clip = 0.2,
+    epsilon_clip = 0.3,
     critic_weight = 0.5,
     batch_size = 8,
-    learning_rate = 0.00005,
+    learning_rate = 0.0001,
     epochs = 4,
-    entropy_weight = 0.020,
+    entropy_weight = 0.05,
     clip_grad = 0.5
   },
   log = log
