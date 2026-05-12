@@ -24,8 +24,16 @@ local function stepWithGameState()
 
   -- If match is started during first round. Then set random cpu lvl
   if roundno() == 1 and roundstart() then
-    set_random_cpu_levels()
+    local val = math.random()
+    print("randval", val)
+    if val > 0.5 then
+      setLevels(1,8)
+    end
+    if val < 0.5 then
+      setLevels(8,1)
+    end
   end
+
 
   -- If the match is over. Reload the game. Infinite matches for training!
   if matchover() and running then

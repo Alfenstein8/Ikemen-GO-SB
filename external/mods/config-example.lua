@@ -33,7 +33,7 @@ end
 local function apply_atkmul(n, action)
   local p = Player(n)
   local impact = 0.1
-  local change = action * impact
+  local change = -action * impact
   local current = p.get.attackmul()
   p.set.attackmul(clamp(current + change, 0.1, 3.0))
 end
@@ -57,7 +57,7 @@ return {
   endpoint = "http://localhost:3000",
   description = "Buff Nerf RL system",
   reward_function = reward_function,
-  frame_step_interval = 10,
+  frame_step_interval = 15,
   print_step_summary = true,
   allow_overwrite = true,
   allow_rename = false,
@@ -70,8 +70,8 @@ return {
     { "p1_attackMul", Player(1).get.attackmul, { 0.1, 3.0 } },
     { "p2_attackMul", Player(2).get.attackmul, { 0.1, 3.0 } },
     { "round_time", roundtime, { 0, 5940 } },
-    { "p1_power", Player(1).get.power, { 0, 1000.0 } },
-    { "p2_power", Player(2).get.power, { 0, 1000.0 } },
+    { "p1_power", Player(1).get.power},
+    { "p2_power", Player(2).get.power},
     { "p1_receivedDmg", Player(1).get.receiveddamage },
     { "p2_receivedDmg", Player(2).get.receiveddamage },
     { "p1_score", Player(1).get.score, {0,20000} },
