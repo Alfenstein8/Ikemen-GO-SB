@@ -30,7 +30,7 @@ local function apply_atkmul(n, action)
   local impact = 3
   local change = action * impact
   local current = p.get.attackmul()
-  p.set.attackmul(current + change)
+  p.set.attackmul(clamp(current + change, 0.1, 3.0))
 end
 
 
@@ -71,9 +71,14 @@ return {
   },
   hyperparameters = {
     gamma = 0.995,
+    lambda = 0.95,
+    epsilon_clip = 0.2,
+    critic_weight = 0.5,
+    batch_size = 8,
     learning_rate = 0.00005,
     epochs = 4,
-    entropy_weight = 0.020
+    entropy_weight = 0.020,
+    clip_grad = 0.5
   },
   log = log
 }
