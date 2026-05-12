@@ -7,6 +7,12 @@ local sb = {}
 local log_file
 local log_keys = {}
 
+function SBLIB.get_steps()
+    if not stepCounter then return end
+
+    return stepCounter
+end
+
 -- Setup the config from a path
 function SBLIB.setup_config_from_path(config_path)
     SBLIB.setup_config(require(config_path))

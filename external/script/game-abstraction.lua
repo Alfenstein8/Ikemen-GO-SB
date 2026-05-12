@@ -1,6 +1,7 @@
 hook.add("main.menu.loop", "setupConfigOnce", function() Start() end)
 local frame = 0
 local running = false
+local SBLIB = require("external.mods.sb-lib")
 
 local function setLevels(p1, p2)
   if player(1) then
@@ -24,9 +25,23 @@ local function stepWithGameState()
 
   -- If match is started during first round. Then set random cpu lvl
   if roundno() == 1 and roundstart() then
-    set_random_cpu_levels()
+    -- local steps = SBLIB.get_steps()
+    -- if steps < 50000 then
+    --   print("Phase 1")
+    if math.random() < 0.5 then
+      setLevels(8,1)
+    else
+      setLevels(1,8)
+    end
+    -- elseif steps < 100000 then
+    --   print("Phase 2")
+    --   local rand1 = math.random(1, 3)
+    --   local rand2 = math.random(6, 8)
+    --   setLevels(rand1, rand2)
+    -- else
+    --   setLevels(5,5)
+    -- end
   end
-
   -- If the match is over. Reload the game. Infinite matches for training!
   if matchover() and running then
     matchReload()

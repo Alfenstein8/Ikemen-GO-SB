@@ -1,20 +1,31 @@
 local SBLIB = require("external.mods.sb-lib")
+local function players_hit_each_other()
+
+  local p1_life = Player(1).get.life()
+  local p2_life = Player(2).get.life()
+
+  if last_p1_life == nil then
+    last_p1_life = p1_life
+    last_p2_life = p2_life
+    return false
+  end
+
+  local changed = p1_life ~= last_p1_life or p2_life ~= last_p2_life
+
+  last_p1_life = p1_life
+  last_p2_life = p2_life
+
+  return changed
+end
 
 function Start()
   SBLIB.setup_config_from_path("external/mods/config-example")
 end
 
-
-local prev_total_life = nil
 function Update(frame)
-
-    -- Steps everytime player's hit each other
-    -- local total_life = Player(1).get.life() + Player(2).get.life()
-    -- if prev_total_life ~= nil and total_life ~= prev_total_life then
-        SBLIB.step(frame)
-   -- --end
-
-    prev_total_life = total_life
+  if players_hit_each_other() then
+    SBLIB.step(frame)
+  end
 end
 
 function RoundStarted()
