@@ -15,7 +15,7 @@ local function set_random_cpu_levels()
   -- generates random number between 1 and 8
   local rand1 = math.random(1, 8)
   local rand2 = math.random(1, 8)
-  setLevels(rand1, rand2)
+  setLevels(8, 1)
 end
 
 local function stepWithGameState()
