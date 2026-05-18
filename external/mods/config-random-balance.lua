@@ -19,7 +19,7 @@ end
 
 local function apply_atkmul(n, action)
   local p = Player(n)
-  local impact = 0.01
+  local impact = 0.04
   local change = action * impact
   local current = p.get.attackmul()
   p.set.attackmul(clamp(current + change, 0.1, 3.0))
