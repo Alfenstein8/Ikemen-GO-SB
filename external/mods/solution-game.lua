@@ -1,7 +1,7 @@
 local SBLIB = require("external.mods.sb-lib")
 
 function Start()
-  SBLIB.setup_config_from_path("external/mods/config-example")
+  SBLIB.setup_config_from_path("external/mods/config-random-balance")
 end
 
 
