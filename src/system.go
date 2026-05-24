@@ -437,9 +437,13 @@ func (s *System) init(w, h int32) *lua.LState {
 	gfx.BeginFrame(false)
 
 	// And the audio.
-	speaker = &SDLSpeaker{}
-	speaker.Init(beep.SampleRate(sys.cfg.Sound.SampleRate), audioOutLen)
-	speaker.Play(NewNormalizer(s.soundMixer))
+	if _, ok := s.cmdFlags["-nosound"]; ok {
+		speaker = &NullSpeaker{}
+	} else {
+		speaker = &SDLSpeaker{}
+		speaker.Init(beep.SampleRate(sys.cfg.Sound.SampleRate), audioOutLen)
+		speaker.Play(NewNormalizer(s.soundMixer))
+	}
 	l := lua.NewState()
 	l.Options.IncludeGoStackTrace = true
 	l.OpenLibs()

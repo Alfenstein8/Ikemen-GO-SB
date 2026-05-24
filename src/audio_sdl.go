@@ -21,6 +21,15 @@ type AudioSink interface {
 
 var speaker AudioSink
 
+type NullSpeaker struct{}
+
+func (s *NullSpeaker) Init(sr beep.SampleRate, bufferSize int) error { return nil }
+func (s *NullSpeaker) Play(st beep.Streamer)                         {}
+func (s *NullSpeaker) Lock()                                         {}
+func (s *NullSpeaker) Unlock()                                       {}
+func (s *NullSpeaker) Close()                                        {}
+func (s *NullSpeaker) FillAudio()                                    {}
+
 type SDLSpeaker struct {
 	dev        sdl.AudioDeviceID
 	mixer      *beep.Mixer

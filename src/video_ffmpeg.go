@@ -185,7 +185,9 @@ func (bgv *bgVideo) Open(filename string, volume int, sm BgVideoScaleMode, sf Bg
 			dst := beep.SampleRate(sys.cfg.Sound.SampleRate)
 			resampler := beep.Resample(audioResampleQuality, bgv.audioSampleRate, dst, bgv.videoVol)
 			bgv.videoCtrl = &beep.Ctrl{Streamer: resampler, Paused: true} // start paused until SetPlaying(true)
+			speaker.Lock()
 			sys.soundMixer.Add(bgv.videoCtrl)
+			speaker.Unlock()
 			bgv.inMixer = true
 			bgv.volume = volume
 			bgv.updateAudioVolume()
@@ -476,7 +478,9 @@ func (bgv *bgVideo) SetPlaying(on bool) {
 	if on {
 		// Ensure we're attached to the mixer (it may have been cleared).
 		if bgv.videoCtrl != nil && !bgv.inMixer {
+			speaker.Lock()
 			sys.soundMixer.Add(bgv.videoCtrl)
+			speaker.Unlock()
 			bgv.inMixer = true
 		}
 		// If we have not established a baseline PTS in this decode epoch,

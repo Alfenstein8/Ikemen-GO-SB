@@ -2,6 +2,35 @@ local function clamp(value, min_value, max_value)
   return math.max(min_value, math.min(max_value, value))
 end
 
+
+-- WORKS BUT EXTREMELY HIGH DMG THO.
+-- local function reward_function(last)
+--   local p1Life = Player(1).get.life()
+--   local p2Life = Player(2).get.life()
+-- 
+--   local p1Damage = Player(1).get.receiveddamage()
+--   local p2Damage = Player(2).get.receiveddamage()
+-- 
+--   -- 0 = perfectly even health, 1000 = one player basically untouched while other is dead
+--   local healthDiff = math.abs(p1Life - p2Life)
+-- 
+--   -- Low health difference => +1, high health difference => -1
+--   local balanceReward = map_range(healthDiff, 0, 1000, 1, -1)
+-- 
+--   -- Small bonus when damage is happening between steps.
+--   -- Uses `last`, which SBLIB updates after reward calculation.
+--   local activityBonus = 0
+--   if last and last.p1_receivedDmg and last.p2_receivedDmg then
+--     local damageDelta =
+--       math.max(0, p1Damage - last.p1_receivedDmg) +
+--       math.max(0, p2Damage - last.p2_receivedDmg)
+--     activityBonus = clamp(map_range(damageDelta, 0, 40, 0, 0.08), 0, 0.08)
+--   end
+-- 
+--   return clamp(balanceReward + activityBonus, -1, 1)
+-- end
+
+
 local function reward_function()
   local p1Life = Player(1).get.life()
   local p2Life = Player(2).get.life()
