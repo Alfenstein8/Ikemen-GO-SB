@@ -87,7 +87,7 @@ return {
     epsilon_clip = 0.3,
     critic_weight = 0.5,
     batch_size = 8,
-    learning_rate = 0.0001,
+    learning_rate = 0.001,
     epochs = 4,
     entropy_weight = 0.05,
     clip_grad = 0.5
